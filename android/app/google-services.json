@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1024364845162",
+    "project_id": "workout-ai-app-32337",
+    "storage_bucket": "workout-ai-app-32337.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024364845162:android:034dabf4a216f654881213",
+        "android_client_info": {
+          "package_name": "com.example.workout_ai_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZOogBs7xGSa9tX4gw-JNhT-YcCFzpuTg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

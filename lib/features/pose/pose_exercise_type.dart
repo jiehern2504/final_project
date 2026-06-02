@@ -1,0 +1,4 @@
+enum PoseExerciseType {
+  squat,
+  pushUp,
+}
