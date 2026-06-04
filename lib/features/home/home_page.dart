@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +10,9 @@ import '../planner/workout_plan_repository.dart';
 import '../pose/pose_exercise_picker_page.dart';
 import '../profile/profile_page.dart';
 import '../progress/progress_page.dart';
+import '../../core/notifications/notification_inbox_repository.dart';
+import '../../core/notifications/workout_reminder_service.dart';
+import '../notifications/notifications_page.dart';
 import '../workout/workout_plan_page.dart';
 import '../tutorial/muscle_tutorial_page.dart';
 
@@ -53,8 +58,40 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final WorkoutPlanRepository _planRepository = WorkoutPlanRepository();
+  Timer? _deliverySyncTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _deliverySyncTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => WorkoutReminderService.instance
+          .syncDeliveredNotifications()
+          .catchError((_) {}),
+    );
+    WorkoutReminderService.instance
+        .syncDeliveredNotifications()
+        .catchError((_) {});
+  }
+
+  @override
+  void dispose() {
+    _deliverySyncTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      WorkoutReminderService.instance
+          .syncDeliveredNotifications()
+          .catchError((_) {});
+    }
+  }
 
   String _firstName() {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -85,6 +122,14 @@ class _HomePageState extends State<HomePage> {
                     primaryColor: _kPrimaryColor,
                     secondaryColor: _kSecondaryColor,
                     textColor: _kTextColor,
+                    onNotificationsTap: () {
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (BuildContext context) =>
+                              const NotificationsPage(),
+                        ),
+                      );
+                    },
                     onAiChatTap: () => _openAiChat(context),
                   ),
                   const SizedBox(height: 22),
@@ -148,6 +193,7 @@ class _GreetingSection extends StatelessWidget {
     required this.primaryColor,
     required this.secondaryColor,
     required this.textColor,
+    required this.onNotificationsTap,
     required this.onAiChatTap,
   });
 
@@ -155,6 +201,7 @@ class _GreetingSection extends StatelessWidget {
   final Color primaryColor;
   final Color secondaryColor;
   final Color textColor;
+  final VoidCallback onNotificationsTap;
   final VoidCallback onAiChatTap;
 
   @override
@@ -187,9 +234,18 @@ class _GreetingSection extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _TopIconButton(
-              icon: Icons.notifications_none_rounded,
-              iconColor: secondaryColor,
+            StreamBuilder<int>(
+              stream: NotificationInboxRepository.instance.watchUnreadCount(),
+              initialData: 0,
+              builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+                return _TopIconButton(
+                  icon: Icons.notifications_none_rounded,
+                  iconColor: secondaryColor,
+                  tooltip: 'Notifications',
+                  onTap: onNotificationsTap,
+                  badgeCount: snapshot.data ?? 0,
+                );
+              },
             ),
             const SizedBox(width: 8),
             _TopIconButton(
@@ -211,15 +267,56 @@ class _TopIconButton extends StatelessWidget {
     required this.iconColor,
     this.onTap,
     this.tooltip,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final Color iconColor;
   final VoidCallback? onTap;
   final String? tooltip;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
+    final Widget iconWidget = tooltip != null && tooltip!.isNotEmpty
+        ? Tooltip(
+            message: tooltip!,
+            child: Icon(icon, color: iconColor),
+          )
+        : Icon(icon, color: iconColor);
+
+    final Widget content = badgeCount > 0
+        ? Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              iconWidget,
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    badgeCount > 9 ? '9+' : '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
+        : iconWidget;
+
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
@@ -239,12 +336,7 @@ class _TopIconButton extends StatelessWidget {
               ),
             ],
           ),
-          child: tooltip != null && tooltip!.isNotEmpty
-              ? Tooltip(
-                  message: tooltip!,
-                  child: Icon(icon, color: iconColor),
-                )
-              : Icon(icon, color: iconColor),
+          child: Center(child: content),
         ),
       ),
     );

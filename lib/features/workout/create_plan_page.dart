@@ -198,10 +198,24 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       );
 
       if (timeResult.reminderEnabled && timeResult.hasTime) {
-        await WorkoutReminderService.instance.scheduleDailyReminder(
-          hour: timeResult.hour!,
-          minute: timeResult.minute!,
-        );
+        final bool granted = await WorkoutReminderService.instance
+            .ensureReminderPermissions();
+        if (!granted) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Enable notifications and Alarms & reminders (exact alarms) '
+                'in settings to receive workout reminders at your chosen time.',
+              ),
+            ),
+          );
+        } else {
+          await WorkoutReminderService.instance.scheduleDailyReminder(
+            hour: timeResult.hour!,
+            minute: timeResult.minute!,
+          );
+        }
       } else {
         await WorkoutReminderService.instance.cancelReminder();
       }

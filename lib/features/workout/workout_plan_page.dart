@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/notifications/workout_reminder_service.dart';
 
@@ -106,6 +107,40 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     );
   }
 
+  bool _isPermissionError(Object error) {
+    return error is StateError &&
+        error.message.toLowerCase().contains('permission');
+  }
+
+  Future<void> _showPermissionDialog() async {
+    if (!mounted) return;
+    final bool? openSettings = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Reminder permissions needed'),
+        content: const Text(
+          'To receive daily workout reminders at the time you choose, enable '
+          'notifications and Alarms & reminders (exact alarms) for this app. '
+          'On Android 14+, exact alarms use a separate system screen—if you '
+          'already declined, use Open Settings as a fallback.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+    if (openSettings == true) {
+      await openAppSettings();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -191,6 +226,12 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
 
       try {
         if (enabled && prefs.hasTime) {
+          final bool granted = await WorkoutReminderService.instance
+              .ensureReminderPermissions();
+          if (!granted) {
+            await _showPermissionDialog();
+            return;
+          }
           await WorkoutReminderService.instance.scheduleDailyReminder(
             hour: prefs.hour!,
             minute: prefs.minute!,
@@ -199,9 +240,13 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
           await WorkoutReminderService.instance.cancelReminder();
         }
       } catch (error) {
-        _showErrorSnackBar(
-          'Reminder settings saved, but notification scheduling failed: ${_errorMessage(error)}',
-        );
+        if (_isPermissionError(error)) {
+          await _showPermissionDialog();
+        } else {
+          _showErrorSnackBar(
+            'Reminder settings saved, but notification scheduling failed: ${_errorMessage(error)}',
+          );
+        }
         return;
       }
     } finally {
@@ -228,6 +273,12 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
 
       try {
         if (result.reminderEnabled && result.hasTime) {
+          final bool granted = await WorkoutReminderService.instance
+              .ensureReminderPermissions();
+          if (!granted) {
+            await _showPermissionDialog();
+            return;
+          }
           await WorkoutReminderService.instance.scheduleDailyReminder(
             hour: result.hour!,
             minute: result.minute!,
@@ -236,9 +287,13 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
           await WorkoutReminderService.instance.cancelReminder();
         }
       } catch (error) {
-        _showErrorSnackBar(
-          'Reminder time saved, but notification scheduling failed: ${_errorMessage(error)}',
-        );
+        if (_isPermissionError(error)) {
+          await _showPermissionDialog();
+        } else {
+          _showErrorSnackBar(
+            'Reminder time saved, but notification scheduling failed: ${_errorMessage(error)}',
+          );
+        }
         return;
       }
     } finally {

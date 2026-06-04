@@ -77,8 +77,8 @@ class UserPreferencesRepository {
     await doc.set(
       <String, dynamic>{
         'workoutReminderEnabled': enabled,
-        'workoutReminderHour': ?hour,
-        'workoutReminderMinute': ?minute,
+        'workoutReminderHour': hour ?? FieldValue.delete(),
+        'workoutReminderMinute': minute ?? FieldValue.delete(),
       },
       SetOptions(merge: true),
     );
