@@ -1,4 +1,4 @@
-import 'workout_plan_models.dart';
+import 'models/workout_plan_models.dart';
 
 /// Rule-based MVP plan builder from user profile + optional chat prompt.
 class PlanGenerator {

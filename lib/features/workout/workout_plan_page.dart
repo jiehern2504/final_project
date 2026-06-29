@@ -4,13 +4,13 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/notifications/workout_reminder_service.dart';
 
-import '../planner/ai_chat_page.dart';
+import '../planner/pages/ai_chat_page.dart';
 
 import '../planner/user_preferences_repository.dart';
 
-import '../planner/workout_plan_models.dart';
+import '../planner/models/workout_plan_models.dart';
 
-import '../planner/workout_plan_repository.dart';
+import '../planner/repositories/workout_plan_repository.dart';
 
 import '../progress/progress_page.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../planner/workout_plan_models.dart';
+import '../planner/models/workout_plan_models.dart';
 import '../tutorial/exercise_catalog.dart';
 import '../tutorial/muscle_models.dart';
 

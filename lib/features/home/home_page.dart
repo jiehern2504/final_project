@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../achievement/achievement_page.dart';
-import '../planner/ai_chat_page.dart';
-import '../planner/workout_plan_models.dart';
-import '../planner/workout_plan_repository.dart';
+import '../planner/pages/ai_chat_page.dart';
+import '../planner/models/workout_plan_models.dart';
+import '../planner/repositories/workout_plan_repository.dart';
 import '../pose/pose_exercise_picker_page.dart';
 import '../profile/profile_page.dart';
 import '../progress/progress_page.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../planner/workout_plan_models.dart';
-import '../planner/workout_plan_repository.dart';
+import '../planner/models/workout_plan_models.dart';
+import '../planner/repositories/workout_plan_repository.dart';
 
 const Color _kPrimaryColor = Color(0xFF4CAF50);
 const Color _kSecondaryColor = Color(0xFFFFB74D);

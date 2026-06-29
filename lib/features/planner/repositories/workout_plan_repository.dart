@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'plan_generator.dart';
-import 'workout_plan_models.dart';
+import '../plan_generator.dart';
+import '../models/workout_plan_models.dart';
 
 class WorkoutPlanRepository {
   WorkoutPlanRepository({FirebaseFirestore? firestore})

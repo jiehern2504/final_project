@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../planner/workout_plan_models.dart';
-import '../planner/workout_plan_repository.dart';
+import '../planner/models/workout_plan_models.dart';
+import '../planner/repositories/workout_plan_repository.dart';
 import '../workout/workout_plan_page.dart';
 import '../tutorial/exercise_catalog.dart';
 import '../tutorial/exercise_detail_page.dart';
