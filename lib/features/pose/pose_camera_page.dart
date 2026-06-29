@@ -8,6 +8,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'analysis/pose_feedback.dart';
 import 'analysis/pushup_analyzer.dart';
 import 'analysis/squat_analyzer.dart';
+import 'analysis/lunge_analyzer.dart';
+import 'analysis/glutebridge_analyzer.dart';
+import 'analysis/plank_analyzer.dart';
+import 'analysis/crunch_analyzer.dart';
 import 'input_image_from_camera.dart'
     show inputImageFromCameraImage, mlKitRotationForCameraFrame;
 import 'pose_constants.dart';
@@ -40,8 +44,13 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
   Size _inputImageSize = Size.zero;
   InputImageRotation _lastRotation = InputImageRotation.rotation0deg;
 
-  final PushUpRepCounter _pushUpReps = PushUpRepCounter();
-  final SquatRepCounter _squatReps = SquatRepCounter();
+  // ── Rep / hold counters ────────────────────────────────────────────────────
+  final PushUpRepCounter      _pushUpReps      = PushUpRepCounter();
+  final SquatRepCounter       _squatReps       = SquatRepCounter();
+  final LungeRepCounter       _lungeReps       = LungeRepCounter();
+  final GluteBridgeRepCounter _gluteBridgeReps = GluteBridgeRepCounter();
+  final PlankHoldTimer        _plankTimer      = PlankHoldTimer();
+  final CrunchRepCounter      _crunchReps      = CrunchRepCounter();
 
   @override
   void initState() {
@@ -63,7 +72,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       setState(() {
         _initializing = false;
         _error =
-            'Camera permission is required for live pose feedback. You can enable it in system settings.';
+        'Camera permission is required for live pose feedback. You can enable it in system settings.';
       });
       return;
     }
@@ -72,7 +81,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     try {
       final List<CameraDescription> cameras = await availableCameras();
       final CameraDescription camera = cameras.firstWhere(
-        (CameraDescription c) => c.lensDirection == CameraLensDirection.back,
+            (CameraDescription c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
 
@@ -80,7 +89,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         camera,
         ResolutionPreset.medium,
         enableAudio: false,
-        // YUV_420_888 avoids some NV21 ImageReader + preview black-screen paths on real devices.
         imageFormatGroup: ImageFormatGroup.yuv420,
       );
 
@@ -92,8 +100,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         return;
       }
 
-      // Assign before [startImageStream]: first frames can arrive before its
-      // Future completes; [_onCameraImage] uses [_camera] and would drop them.
       _camera = controller;
       if (!mounted) {
         await controller.dispose();
@@ -104,9 +110,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       try {
         await controller.startImageStream(_onCameraImage);
       } catch (e) {
-        try {
-          await controller.dispose();
-        } catch (_) {}
+        try { await controller.dispose(); } catch (_) {}
         await _mlKit?.dispose();
         _mlKit = null;
         _camera = null;
@@ -124,13 +128,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         await _mlKit?.dispose();
         return;
       }
-      setState(() {
-        _initializing = false;
-      });
+      setState(() => _initializing = false);
     } catch (e) {
-      try {
-        await controller?.dispose();
-      } catch (_) {}
+      try { await controller?.dispose(); } catch (_) {}
       await _mlKit?.dispose();
       _mlKit = null;
       _camera = null;
@@ -177,18 +177,11 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       final PoseFeedback next;
       if (poses.isEmpty) {
         next = PoseFeedback.noBody;
-        _pushUpReps.clearPhase();
-        _squatReps.clearPhase();
+        _clearAllPhases();
       } else {
         final Pose pose = poses.first;
-        next = widget.exercise == PoseExerciseType.squat
-            ? analyzeSquat(pose)
-            : analyzePushUp(pose);
-        if (widget.exercise == PoseExerciseType.squat) {
-          _squatReps.update(pose);
-        } else {
-          _pushUpReps.update(pose);
-        }
+        next = _analyze(pose);
+        _updateCounter(pose);
       }
 
       _pendingFeedback = next;
@@ -210,6 +203,51 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     }
   }
 
+  /// Dispatches to the correct analyzer for the selected exercise.
+  PoseFeedback _analyze(Pose pose) {
+    switch (widget.exercise) {
+      case PoseExerciseType.squat:
+        return analyzeSquat(pose);
+      case PoseExerciseType.pushUp:
+        return analyzePushUp(pose);
+      case PoseExerciseType.lunge:
+        return analyzeLunge(pose);
+      case PoseExerciseType.gluteBridge:
+        return analyzeGluteBridge(pose);
+      case PoseExerciseType.plank:
+        return analyzePlank(pose);
+      case PoseExerciseType.crunch:
+        return analyzeCrunch(pose);
+    }
+  }
+
+  /// Updates only the counter for the active exercise.
+  void _updateCounter(Pose pose) {
+    switch (widget.exercise) {
+      case PoseExerciseType.squat:
+        _squatReps.update(pose);
+      case PoseExerciseType.pushUp:
+        _pushUpReps.update(pose);
+      case PoseExerciseType.lunge:
+        _lungeReps.update(pose);
+      case PoseExerciseType.gluteBridge:
+        _gluteBridgeReps.update(pose);
+      case PoseExerciseType.plank:
+        _plankTimer.update(pose);
+      case PoseExerciseType.crunch:
+        _crunchReps.update(pose);
+    }
+  }
+
+  void _clearAllPhases() {
+    _pushUpReps.clearPhase();
+    _squatReps.clearPhase();
+    _lungeReps.clearPhase();
+    _gluteBridgeReps.clearPhase();
+    _plankTimer.clearPhase();
+    _crunchReps.clearPhase();
+  }
+
   @override
   void dispose() {
     _stopCamera();
@@ -220,46 +258,76 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     final CameraController? cam = _camera;
     _camera = null;
     if (cam != null) {
-      if (cam.value.isStreamingImages) {
-        await cam.stopImageStream();
-      }
+      if (cam.value.isStreamingImages) await cam.stopImageStream();
       await cam.dispose();
     }
     await _mlKit?.dispose();
     _mlKit = null;
   }
 
-  int get _repDisplayCount => widget.exercise == PoseExerciseType.squat
-      ? _squatReps.count
-      : _pushUpReps.count;
+  // ── Display helpers ────────────────────────────────────────────────────────
 
-  Color get _accentColor => widget.exercise == PoseExerciseType.squat
-      ? const Color(0xffDF5089)
-      : const Color(0xff005F9C);
+  /// Returns the rep count OR held seconds for display in the badge.
+  int get _displayCount {
+    switch (widget.exercise) {
+      case PoseExerciseType.squat:       return _squatReps.count;
+      case PoseExerciseType.pushUp:      return _pushUpReps.count;
+      case PoseExerciseType.lunge:       return _lungeReps.count;
+      case PoseExerciseType.gluteBridge: return _gluteBridgeReps.count;
+      case PoseExerciseType.plank:       return _plankTimer.seconds;
+      case PoseExerciseType.crunch:      return _crunchReps.count;
+    }
+  }
+
+  /// True for plank — badge shows "s" suffix instead of "reps".
+  bool get _isTimed => widget.exercise == PoseExerciseType.plank;
+
+  String get _exerciseTitle {
+    switch (widget.exercise) {
+      case PoseExerciseType.squat:       return 'Squat';
+      case PoseExerciseType.pushUp:      return 'Push-up';
+      case PoseExerciseType.lunge:       return 'Lunge';
+      case PoseExerciseType.gluteBridge: return 'Glute Bridge';
+      case PoseExerciseType.plank:       return 'Plank';
+      case PoseExerciseType.crunch:      return 'Crunch';
+    }
+  }
+
+  IconData get _exerciseIcon {
+    switch (widget.exercise) {
+      case PoseExerciseType.squat:       return Icons.directions_walk;
+      case PoseExerciseType.pushUp:      return Icons.fitness_center;
+      case PoseExerciseType.lunge:       return Icons.transfer_within_a_station;
+      case PoseExerciseType.gluteBridge: return Icons.airline_seat_flat;
+      case PoseExerciseType.plank:       return Icons.horizontal_rule;
+      case PoseExerciseType.crunch:      return Icons.airline_seat_recline_extra;
+    }
+  }
+
+  Color get _accentColor {
+    switch (widget.exercise) {
+      case PoseExerciseType.squat:       return const Color(0xffDF5089);
+      case PoseExerciseType.pushUp:      return const Color(0xff005F9C);
+      case PoseExerciseType.lunge:       return const Color(0xff7B3FA0);
+      case PoseExerciseType.gluteBridge: return const Color(0xffC0622C);
+      case PoseExerciseType.plank:       return const Color(0xff1A7A5E);
+      case PoseExerciseType.crunch:      return const Color(0xff9C6B00);
+    }
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final String title = widget.exercise == PoseExerciseType.squat
-        ? 'Squat'
-        : 'Push-up';
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        centerTitle: true,
-      ),
-      body: ColoredBox(
-        color: Colors.black,
-        child: _body(context),
-      ),
+      appBar: AppBar(title: Text(_exerciseTitle), centerTitle: true),
+      body: ColoredBox(color: Colors.black, child: _body(context)),
     );
   }
 
   Widget _body(BuildContext context) {
     if (_initializing) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      );
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
     }
     if (_error != null) {
       return Center(
@@ -276,20 +344,13 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     final CameraController? cam = _camera;
     if (cam == null || !cam.value.isInitialized) {
       return const Center(
-        child: Text(
-          'Camera unavailable.',
-          style: TextStyle(color: Colors.white70),
-        ),
+        child: Text('Camera unavailable.', style: TextStyle(color: Colors.white70)),
       );
     }
 
-    final String exerciseTitle = widget.exercise == PoseExerciseType.squat
-        ? 'Squat'
-        : 'Push-up';
-
     return Stack(
       fit: StackFit.expand,
-      children: [
+      children: <Widget>[
         Center(
           child: CameraPreview(
             cam,
@@ -306,35 +367,33 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
           ),
         ),
         Positioned(
-          top: 16,
-          left: 16,
-          right: 16,
+          top: 16, left: 16, right: 16,
           child: _ExerciseTitleChip(
-            title: exerciseTitle,
-            icon: widget.exercise == PoseExerciseType.squat
-                ? Icons.directions_walk
-                : Icons.fitness_center,
+            title: _exerciseTitle,
+            icon: _exerciseIcon,
             color: _accentColor,
           ),
         ),
         Positioned(
-          bottom: 120,
-          left: 0,
-          right: 0,
+          bottom: 120, left: 0, right: 0,
           child: Center(
-            child: _RepCountBadge(count: _repDisplayCount, color: _accentColor),
+            child: _RepCountBadge(
+              count: _displayCount,
+              color: _accentColor,
+              isTimed: _isTimed,
+            ),
           ),
         ),
         Positioned(
-          left: 12,
-          right: 12,
-          bottom: 24,
+          left: 12, right: 12, bottom: 24,
           child: _FeedbackBanner(feedback: _feedback),
         ),
       ],
     );
   }
 }
+
+// ── Sub-widgets (unchanged style from original) ────────────────────────────
 
 class _ExerciseTitleChip extends StatelessWidget {
   const _ExerciseTitleChip({
@@ -355,7 +414,7 @@ class _ExerciseTitleChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
-          children: [
+          children: <Widget>[
             Icon(icon, color: Colors.white),
             const SizedBox(width: 10),
             Text(
@@ -374,10 +433,17 @@ class _ExerciseTitleChip extends StatelessWidget {
 }
 
 class _RepCountBadge extends StatelessWidget {
-  const _RepCountBadge({required this.count, required this.color});
+  const _RepCountBadge({
+    required this.count,
+    required this.color,
+    required this.isTimed,
+  });
 
   final int count;
   final Color color;
+
+  /// When true, appends "s" (seconds) instead of showing a bare number.
+  final bool isTimed;
 
   @override
   Widget build(BuildContext context) {
@@ -387,7 +453,7 @@ class _RepCountBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: [
+        boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 10,
@@ -396,7 +462,25 @@ class _RepCountBadge extends StatelessWidget {
         ],
       ),
       alignment: Alignment.center,
-      child: Text(
+      child: isTimed
+          ? Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            '$count',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Text(
+            's',
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+        ],
+      )
+          : Text(
         '$count',
         style: const TextStyle(
           color: Colors.white,
@@ -425,7 +509,7 @@ class _FeedbackBanner extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-          children: [
+          children: <Widget>[
             Text(
               feedback.headlineEn,
               style: const TextStyle(
