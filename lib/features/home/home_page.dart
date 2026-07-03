@@ -10,6 +10,7 @@ import '../planner/repositories/workout_plan_repository.dart';
 import '../pose/pose_exercise_picker_page.dart';
 import '../profile/profile_page.dart';
 import '../progress/progress_page.dart';
+import '../tdee/tdee_bmi_page.dart';
 import '../../core/notifications/notification_inbox_repository.dart';
 import '../../core/notifications/workout_reminder_service.dart';
 import '../notifications/notifications_page.dart';
@@ -47,6 +48,14 @@ void _openWorkoutPlan(BuildContext context) {
   Navigator.of(context).push<void>(
     MaterialPageRoute<void>(
       builder: (BuildContext context) => const WorkoutPlanPage(),
+    ),
+  );
+}
+
+void _openTdee(BuildContext context) {
+  Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (BuildContext context) => const TdeeBmiPage(),
     ),
   );
 }
@@ -393,11 +402,7 @@ class _ShortcutRow extends StatelessWidget {
             color: secondaryColor,
             cardColor: cardColor,
             textColor: textColor,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('TDEE screen coming soon.')),
-              );
-            },
+            onTap: () => _openTdee(context),
           ),
         ),
       ],

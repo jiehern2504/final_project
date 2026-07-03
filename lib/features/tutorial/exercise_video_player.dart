@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -13,6 +15,8 @@ class ExerciseVideoPlayer extends StatefulWidget {
     this.clipTopRadius = false,
     this.height = 170,
     this.onPlaybackFailed,
+    this.active = true,
+    this.onSettled,
   });
 
   final String videoUrl;
@@ -22,6 +26,15 @@ class ExerciseVideoPlayer extends StatefulWidget {
   final bool clipTopRadius;
   final double height;
   final VoidCallback? onPlaybackFailed;
+
+  /// When false, the controller is NOT created yet (a shimmer is shown). Used
+  /// to stagger multiple players so they don't grab hardware decoders and
+  /// network bandwidth at the exact same moment.
+  final bool active;
+
+  /// Fires once the player has "settled" — either it started playing or it
+  /// failed. Lets a parent release a gate that was waiting on this player.
+  final VoidCallback? onSettled;
 
   bool get _coverMode => previewMode || detailStyle;
 
@@ -33,6 +46,13 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
   VideoPlayerController? _controller;
   bool _initialized = false;
   bool _playbackFailedNotified = false;
+  bool _settledNotified = false;
+
+  // Stall watchdog: if playback does not advance for a while, auto-retry once.
+  Timer? _stallTimer;
+  Duration _lastPosition = Duration.zero;
+  int _stalledTicks = 0;
+  bool _autoRetried = false;
 
   bool get _looping => widget.previewMode || widget.detailStyle;
 
@@ -41,7 +61,7 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _initController();
+    if (widget.active) _initController();
   }
 
   @override
@@ -50,6 +70,11 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
     if (oldWidget.videoUrl != widget.videoUrl) {
       _disposeController();
       _playbackFailedNotified = false;
+      _settledNotified = false;
+      _autoRetried = false;
+      if (widget.active) _initController();
+    } else if (!oldWidget.active && widget.active && _controller == null) {
+      // Gate opened — start now.
       _initController();
     }
   }
@@ -62,10 +87,55 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
         if (!mounted) return;
         setState(() => _initialized = true);
         _controller!.play();
+        _notifySettled();
+        _startStallWatchdog();
       }).catchError((Object e) {
         _onInitError(e);
         return null;
       });
+  }
+
+  void _notifySettled() {
+    if (_settledNotified) return;
+    _settledNotified = true;
+    widget.onSettled?.call();
+  }
+
+  /// Periodically checks that playback is advancing. If it stays stuck (stuck
+  /// buffering / frozen frame) for a few seconds, retry once.
+  void _startStallWatchdog() {
+    _stallTimer?.cancel();
+    _lastPosition = Duration.zero;
+    _stalledTicks = 0;
+    _stallTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      final controller = _controller;
+      if (!mounted || controller == null || !controller.value.isInitialized) {
+        return;
+      }
+      // If it isn't meant to be playing (e.g. app backgrounded), don't treat
+      // the frozen position as a stall.
+      if (!controller.value.isPlaying) {
+        _stalledTicks = 0;
+        _lastPosition = controller.value.position;
+        return;
+      }
+      final position = controller.value.position;
+      final bool advanced = position != _lastPosition;
+      _lastPosition = position;
+      if (advanced) {
+        _stalledTicks = 0;
+        return;
+      }
+      // Should be playing but not advancing this tick.
+      _stalledTicks++;
+      if (_stalledTicks >= 2 && !_autoRetried) {
+        // ~6s stuck → retry once via the parent's retry hook.
+        _autoRetried = true;
+        _stallTimer?.cancel();
+        debugPrint('ExerciseVideo stalled, auto-retrying [${widget.videoUrl}]');
+        _onInitError('stalled');
+      }
+    });
   }
 
   void _onInitError(Object e) {
@@ -73,10 +143,13 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
     _playbackFailedNotified = true;
     debugPrint('ExerciseVideo playback [${widget.videoUrl}]: $e');
     _disposeController();
+    _notifySettled();
     widget.onPlaybackFailed?.call();
   }
 
   void _disposeController() {
+    _stallTimer?.cancel();
+    _stallTimer = null;
     _controller?.dispose();
     _controller = null;
     _initialized = false;

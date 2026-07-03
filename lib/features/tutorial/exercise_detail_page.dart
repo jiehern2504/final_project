@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../pose/pose_camera_page.dart';
@@ -27,10 +29,28 @@ class ExerciseDetailPage extends StatefulWidget {
 class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
   late final ExerciseVideoRepository _repository;
 
+  // Gate that lets the SIDE video start only after the FRONT one has settled,
+  // so the two players don't contend for decoders/bandwidth on load.
+  final ValueNotifier<bool> _sideActive = ValueNotifier<bool>(false);
+  Timer? _sideFallbackTimer;
+
   @override
   void initState() {
     super.initState();
     _repository = widget.videoRepository ?? ExerciseVideoRepository();
+    // Safety net: start SIDE anyway if FRONT never settles (e.g. slow network).
+    _sideFallbackTimer = Timer(const Duration(seconds: 6), _openSideGate);
+  }
+
+  void _openSideGate() {
+    if (!_sideActive.value) _sideActive.value = true;
+  }
+
+  @override
+  void dispose() {
+    _sideFallbackTimer?.cancel();
+    _sideActive.dispose();
+    super.dispose();
   }
 
   @override
@@ -55,6 +75,7 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                     storagePath: exercise.frontStoragePath,
                     repository: _repository,
                     clipTopRadius: true,
+                    onSettled: _openSideGate,
                   ),
                 ),
                 Divider(
@@ -63,11 +84,17 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                   color: Colors.grey.shade200,
                 ),
                 Expanded(
-                  child: _AngleVideoSlot(
-                    label: ExerciseVideoAngle.side.label,
-                    storagePath: exercise.sideStoragePath,
-                    repository: _repository,
-                    muted: true,
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: _sideActive,
+                    builder: (context, active, _) {
+                      return _AngleVideoSlot(
+                        label: ExerciseVideoAngle.side.label,
+                        storagePath: exercise.sideStoragePath,
+                        repository: _repository,
+                        muted: true,
+                        active: active,
+                      );
+                    },
                   ),
                 ),
                 Material(
@@ -136,6 +163,8 @@ class _AngleVideoSlot extends StatefulWidget {
     required this.repository,
     this.muted = false,
     this.clipTopRadius = false,
+    this.active = true,
+    this.onSettled,
   });
 
   final String label;
@@ -143,6 +172,8 @@ class _AngleVideoSlot extends StatefulWidget {
   final ExerciseVideoRepository repository;
   final bool muted;
   final bool clipTopRadius;
+  final bool active;
+  final VoidCallback? onSettled;
 
   @override
   State<_AngleVideoSlot> createState() => _AngleVideoSlotState();
@@ -208,6 +239,8 @@ class _AngleVideoSlotState extends State<_AngleVideoSlot> {
                   height: height,
                   muted: widget.muted,
                   clipTopRadius: widget.clipTopRadius,
+                  active: widget.active,
+                  onSettled: widget.onSettled,
                   onPlaybackFailed: _retry,
                 );
               },
