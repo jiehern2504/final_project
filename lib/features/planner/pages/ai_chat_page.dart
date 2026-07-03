@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/chat_message.dart';
+import '../models/workout_plan_models.dart';
+import '../repositories/workout_plan_repository.dart';
 import '../services/ai_chat_service.dart';
+import '../services/workout_plan_service.dart';
+import '../services/fake_plan_ai.dart';
 import '../widgets/chat_bubble.dart';
 import '../../progress/progress_page.dart';
 
@@ -12,8 +16,10 @@ import '../../progress/progress_page.dart';
 /// workouts, nutrition and healthy lifestyle — off-topic questions are
 /// politely declined by the model's system instruction.
 ///
-/// This page does NOT generate workout plans.
-/// For AI-generated plans see WorkoutPlanService / the Planner flow.
+/// When the user asks for a workout plan (e.g. "make me a workout plan"),
+/// this page generates a trackable plan via [WorkoutPlanService] — built only
+/// from the tutorial catalogue and matched to the user's profile — and lets
+/// the user adopt it into progress tracking.
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
 
@@ -24,6 +30,11 @@ class AiChatPage extends StatefulWidget {
 class _AiChatPageState extends State<AiChatPage> {
   // ── Services ───────────────────────────────────────────────────────────────
   final AiChatService _chatService = AiChatService();
+  final WorkoutPlanRepository _planRepository = WorkoutPlanRepository();
+  late final WorkoutPlanService _planService = WorkoutPlanService(
+    repository: _planRepository,
+    aiCaller: kUseFakeAiPlan ? fakePlanJson : null,
+  );
 
   // ── UI controllers ─────────────────────────────────────────────────────────
   final TextEditingController _inputController = TextEditingController();
@@ -34,13 +45,17 @@ class _AiChatPageState extends State<AiChatPage> {
   final List<ChatMessage> _messages = <ChatMessage>[
     const ChatMessage(
       text: "Hi! I'm your personal fitness coach 💪\n\n"
-          "Ask me anything about workouts, exercises, nutrition, "
-          "or healthy lifestyle. How can I help you today?",
+          "Ask me anything about workouts, nutrition or healthy living — or "
+          "say \"make me a workout plan\" and I'll build one you can track.",
       isUser: false,
     ),
   ];
 
   bool _isSending = false;
+
+  /// Index of the plan message currently being adopted (shows a spinner on
+  /// just that card); null when nothing is being adopted.
+  int? _adoptingIndex;
 
   // ── Colour constants (aligned with AppColors) ──────────────────────────────
   static const Color _kPrimary = Color(0xFF4CAF50);
@@ -86,7 +101,8 @@ class _AiChatPageState extends State<AiChatPage> {
 
   // ── Send logic ─────────────────────────────────────────────────────────────
 
-  /// Sends the current input to Gemini and appends the response.
+  /// Sends the current input. Plan requests generate a trackable plan;
+  /// everything else is answered by the Q&A coach.
   Future<void> _send() async {
     final String text = _inputController.text.trim();
     if (text.isEmpty || _isSending) return;
@@ -102,14 +118,27 @@ class _AiChatPageState extends State<AiChatPage> {
     _addMessage(ChatMessage.loading());
 
     try {
-      // 3. Call Gemini via AiChatService.
-      final String reply = await _chatService.sendMessage(text);
+      if (_isPlanRequest(text)) {
+        await _generatePlanReply(text);
+      } else {
+        await _sendQuestion(text);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+        // Re-focus the input for quick follow-up messages.
+        _inputFocus.requestFocus();
+      }
+    }
+  }
 
-      // 4. Replace loading bubble with the AI response.
+  /// Normal fitness Q&A via Gemini.
+  Future<void> _sendQuestion(String text) async {
+    try {
+      final String reply = await _chatService.sendMessage(text);
       _removeLastMessage();
       _addMessage(ChatMessage(text: reply, isUser: false));
     } on AiChatException catch (e) {
-      // Show the typed error message in an error bubble.
       _removeLastMessage();
       _addMessage(ChatMessage.error(e.message));
     } catch (_) {
@@ -117,12 +146,99 @@ class _AiChatPageState extends State<AiChatPage> {
       _addMessage(
         ChatMessage.error('Something went wrong. Please try again.'),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-        // Re-focus the input for quick follow-up messages.
-        _inputFocus.requestFocus();
-      }
+    }
+  }
+
+  /// Generates a trackable workout plan and shows it as a plan card.
+  Future<void> _generatePlanReply(String userPrompt) async {
+    try {
+      final WorkoutPlan plan = await _planService.generateAndSavePlan(
+        userPrompt: userPrompt,
+      );
+      _removeLastMessage();
+      _addMessage(
+        const ChatMessage(
+          text: "Here's a plan built only from your tutorial exercises and "
+              "matched to your profile. Add it to your progress to start "
+              "tracking each day.",
+          isUser: false,
+        ),
+      );
+      _addMessage(ChatMessage.planResult(plan));
+    } on WorkoutPlanServiceException catch (e) {
+      _removeLastMessage();
+      _addMessage(ChatMessage.error(e.message));
+    } catch (_) {
+      _removeLastMessage();
+      _addMessage(
+        ChatMessage.error('Could not build a plan. Please try again.'),
+      );
+    }
+  }
+
+  /// Heuristic: does [text] look like a request to build a workout plan?
+  bool _isPlanRequest(String text) {
+    final String t = text.toLowerCase();
+    if (t.contains('计划') || t.contains('训练安排')) return true;
+    const List<String> verbs = <String>[
+      'make',
+      'create',
+      'generate',
+      'build',
+      'give me',
+      'plan me',
+      'design',
+    ];
+    final bool hasVerb = verbs.any(t.contains);
+    if (t.contains('workout plan') ||
+        t.contains('training plan') ||
+        t.contains('weekly plan') ||
+        t.contains('plan for me')) {
+      return true;
+    }
+    if (hasVerb &&
+        (t.contains('plan') ||
+            t.contains('routine') ||
+            t.contains('program'))) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Adopts the plan in message [index] into progress tracking.
+  Future<void> _adoptPlan(int index) async {
+    if (_adoptingIndex != null) return;
+    final ChatMessage message = _messages[index];
+    final WorkoutPlan? plan = message.plan;
+    if (plan == null) return;
+
+    setState(() => _adoptingIndex = index);
+    try {
+      await _planRepository.startPlan(plan.id);
+      if (!mounted) return;
+      setState(() {
+        _messages[index] = message.copyWith(planAdopted: true);
+        _adoptingIndex = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Plan added to your progress. Good luck!'),
+        ),
+      );
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const ProgressPage(),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _adoptingIndex = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not add the plan. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -164,6 +280,8 @@ class _AiChatPageState extends State<AiChatPage> {
             child: _MessageList(
               messages: _messages,
               scrollController: _scrollController,
+              adoptingIndex: _adoptingIndex,
+              onAdoptPlan: _adoptPlan,
             ),
           ),
 
@@ -234,10 +352,14 @@ class _MessageList extends StatelessWidget {
   const _MessageList({
     required this.messages,
     required this.scrollController,
+    required this.adoptingIndex,
+    required this.onAdoptPlan,
   });
 
   final List<ChatMessage> messages;
   final ScrollController scrollController;
+  final int? adoptingIndex;
+  final ValueChanged<int> onAdoptPlan;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +368,13 @@ class _MessageList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       itemCount: messages.length,
       itemBuilder: (BuildContext context, int index) {
-        return ChatBubble(message: messages[index]);
+        return ChatBubble(
+          message: messages[index],
+          adopting: adoptingIndex == index,
+          onAdoptPlan: messages[index].plan != null
+              ? () => onAdoptPlan(index)
+              : null,
+        );
       },
     );
   }
@@ -261,6 +389,7 @@ class _SuggestionChips extends StatelessWidget {
   final ValueChanged<String> onTap;
 
   static const List<String> _suggestions = <String>[
+    'Make me a workout plan',
     'How do I lose weight?',
     'Best beginner home workout?',
     'How many calories should I eat?',

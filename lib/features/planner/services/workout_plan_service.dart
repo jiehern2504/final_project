@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/workout_plan_models.dart';
 import '../repositories/workout_plan_repository.dart';
@@ -73,17 +74,32 @@ const List<_CatalogEntry> _availableExercises = <_CatalogEntry>[
 ///   4. Parse the JSON into [WorkoutPlan] / [PlanDay] / [PlanExercise].
 ///   5. Persist via [WorkoutPlanRepository.savePlan].
 ///   6. Return the saved [WorkoutPlan] to the caller (UI).
+/// Signature for the function that turns a prompt into the raw AI response.
+///
+/// Injecting a custom implementation (see [WorkoutPlanService.aiCaller]) lets
+/// us exercise the whole generate → parse → save flow with a canned JSON
+/// response, so the UI can be tested WITHOUT spending real Gemini quota.
+typedef PlanAiCaller = Future<String> Function(String prompt);
+
 class WorkoutPlanService {
   WorkoutPlanService({
     WorkoutPlanRepository? repository,
     FirebaseFirestore? firestore,
+    this.aiCaller,
   })  : _repository = repository ?? WorkoutPlanRepository(),
         _firestore = firestore ?? FirebaseFirestore.instance;
 
   final WorkoutPlanRepository _repository;
   final FirebaseFirestore _firestore;
 
-  static const String _modelName = 'gemini-2.0-flash';
+  /// Optional override for the AI call. When null (the default, production
+  /// behaviour) the real Gemini model is used. When provided, this function
+  /// is called instead — used for free, offline testing with fake data.
+  final PlanAiCaller? aiCaller;
+
+  // Matches the model used by the chat coach. gemini-2.0-flash was retired by
+  // Google ("no longer available"), so both features use gemini-2.5-flash.
+  static const String _modelName = 'gemini-2.5-flash';
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -211,7 +227,14 @@ Return ONLY a valid JSON object. No markdown, no explanation, no extra text.
   }
 
   /// Calls Gemini with the given prompt and returns the raw response text.
+  ///
+  /// If an [aiCaller] override was supplied, it is used instead of the real
+  /// Gemini model (free offline testing path).
   Future<String> _callGemini(String prompt) async {
+    final PlanAiCaller? override = aiCaller;
+    if (override != null) {
+      return override(prompt);
+    }
     try {
       final GenerativeModel model = FirebaseAI.googleAI().generativeModel(
         model: _modelName,
@@ -219,6 +242,12 @@ Return ONLY a valid JSON object. No markdown, no explanation, no extra text.
           // Encourage deterministic, valid JSON output.
           temperature: 0.3,
           maxOutputTokens: 2048,
+          // Return pure JSON (no ```json markdown fences) for robust parsing.
+          responseMimeType: 'application/json',
+          // Disable "thinking": gemini-2.5-flash spends output budget on hidden
+          // reasoning by default, which truncated the JSON. Off = full budget
+          // for the plan + lower token cost.
+          thinkingConfig: ThinkingConfig.withThinkingBudget(0),
         ),
       );
 
@@ -232,15 +261,23 @@ Return ONLY a valid JSON object. No markdown, no explanation, no extra text.
           'Gemini returned an empty response. Please try again.',
         );
       }
-      return text.trim();
+      final String trimmed = text.trim();
+      debugPrint(
+        'PLAN_AI_RAW len=${trimmed.length}: '
+        '${trimmed.substring(0, trimmed.length < 600 ? trimmed.length : 600)}',
+      );
+      return trimmed;
     } on FirebaseException catch (e) {
+      // Log full detail for debugging; show the user a short message.
+      debugPrint('PLAN_AI_ERROR Firebase [${e.code}]: ${e.message}');
       throw WorkoutPlanServiceException(
         'Firebase AI error: ${e.message ?? 'Unknown error'}.',
       );
     } catch (e) {
       if (e is WorkoutPlanServiceException) rethrow;
+      debugPrint('PLAN_AI_ERROR ${e.runtimeType}: $e');
       throw WorkoutPlanServiceException(
-        'Failed to contact the AI. Please check your connection.',
+        'Could not reach the AI. Please check your connection and try again.',
       );
     }
   }
@@ -263,6 +300,7 @@ Return ONLY a valid JSON object. No markdown, no explanation, no extra text.
     try {
       json = jsonDecode(cleaned) as Map<String, dynamic>;
     } catch (_) {
+      debugPrint('PLAN_AI_PARSE_FAIL len=${cleaned.length}: $cleaned');
       throw WorkoutPlanServiceException(
         'Could not parse the AI response. Please try again.',
       );
@@ -278,6 +316,7 @@ Return ONLY a valid JSON object. No markdown, no explanation, no extra text.
         .toList();
 
     if (days.isEmpty) {
+      debugPrint('PLAN_AI_EMPTY (all days/exercises filtered) cleaned=$cleaned');
       throw WorkoutPlanServiceException(
         'The AI generated an empty plan. Please try again.',
       );
