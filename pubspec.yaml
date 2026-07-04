@@ -29,10 +29,19 @@ dependencies:
   flutter_timezone: ^4.1.0
   shared_preferences: ^2.5.3
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_logo.png"
+  adaptive_icon_foreground: "assets/logo_png.png"
+  adaptive_icon_background: "assets/logo_background.png"
 
 flutter:
   uses-material-design: true
