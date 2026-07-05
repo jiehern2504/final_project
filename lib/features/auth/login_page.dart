@@ -1,8 +1,8 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/constants/profile_constants.dart';
+import '../onboarding/widgets/bear_mascot.dart';
+import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -80,34 +80,15 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Future<void> register() async {
-    await _runAuthAction(() async {
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text,
-          );
-      final String? uid = userCredential.user?.uid;
-      if (uid == null) {
-        throw FirebaseAuthException(
-          code: 'missing-user',
-          message: 'User was created but uid is missing.',
-        );
-      }
-
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'height': null,
-        'weight': null,
-        'gender': kGenderOptions.first,
-        'activityLevel': kActivityOptions.first,
-      }, SetOptions(merge: true));
-    });
+  void _goToSignup() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SignupPage()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Welcome"), centerTitle: true),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -121,6 +102,8 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Center(child: BearMascot(size: 84)),
+                      const SizedBox(height: 14),
                       Text(
                         "Workout AI",
                         style: Theme.of(context).textTheme.headlineSmall,
@@ -164,16 +147,31 @@ class _LoginPageState extends State<LoginPage> {
                               )
                             : const Text("Login"),
                       ),
-                      const SizedBox(height: 10),
-                      OutlinedButton(
-                        onPressed: _isSubmitting ? null : register,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Don't have an account? ",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: Colors.black54),
                           ),
-                        ),
-                        child: const Text("Create Account"),
+                          GestureDetector(
+                            onTap: _isSubmitting ? null : _goToSignup,
+                            child: Text(
+                              'Sign up',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF4CAF50),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
