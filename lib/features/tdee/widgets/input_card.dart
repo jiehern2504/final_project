@@ -145,7 +145,7 @@ class _ActivityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
           Icon(Icons.directions_run, size: 20, color: AppColors.secondary),
@@ -158,7 +158,6 @@ class _ActivityRow extends StatelessWidget {
           DropdownButton<String>(
             value: activity,
             underline: const SizedBox.shrink(),
-            isDense: true,
             borderRadius: BorderRadius.circular(12),
             style: const TextStyle(
               fontSize: 15,
