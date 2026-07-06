@@ -48,6 +48,8 @@ flutter:
   assets:
     - assets/pushup.gif
     - assets/squat.gif
+    - assets/glute-bridge-exercise.gif
+    - assets/plank.gif
     - assets/Male_Front_Model.png
     - assets/Male_Back_Model.png
     - assets/Female_Front_Model.png

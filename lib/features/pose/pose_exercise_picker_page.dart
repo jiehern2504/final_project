@@ -84,10 +84,7 @@ class PoseExercisePickerPage extends StatelessWidget {
               subtitle: 'Hip height · knee angle · reps',
               color: _gluteBridgeColor,
               // TODO: replace with Image.asset('assets/glute_bridge.gif', ...)
-              icon: _PlaceholderIcon(
-                icon: Icons.airline_seat_flat,
-                label: 'Add glute_bridge.gif',
-              ),
+              icon: Image.asset('assets/glute-bridge-exercise.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.gluteBridge),
             ),
             const SizedBox(height: 14),
@@ -98,10 +95,7 @@ class PoseExercisePickerPage extends StatelessWidget {
               subtitle: 'Body line · hold time (seconds)',
               color: _plankColor,
               // TODO: replace with Image.asset('assets/plank.gif', ...)
-              icon: _PlaceholderIcon(
-                icon: Icons.horizontal_rule,
-                label: 'Add plank.gif',
-              ),
+              icon: Image.asset('assets/plank.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.plank),
             ),
             const SizedBox(height: 14),
