@@ -1,58 +1,25 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../pose/pose_camera_page.dart';
 import '../pose/pose_exercise_type.dart';
 import 'exercise_catalog.dart';
-import 'exercise_video_error_panel.dart';
 import 'exercise_video_player.dart';
-import 'exercise_video_repository.dart';
-import 'exercise_video_shimmer.dart';
 
 class ExerciseDetailPage extends StatefulWidget {
   const ExerciseDetailPage({
     super.key,
     required this.exercise,
     required this.primaryColor,
-    this.videoRepository,
   });
 
   final TutorialExercise exercise;
   final Color primaryColor;
-  final ExerciseVideoRepository? videoRepository;
 
   @override
   State<ExerciseDetailPage> createState() => _ExerciseDetailPageState();
 }
 
 class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
-  late final ExerciseVideoRepository _repository;
-
-  // Gate that lets the SIDE video start only after the FRONT one has settled,
-  // so the two players don't contend for decoders/bandwidth on load.
-  final ValueNotifier<bool> _sideActive = ValueNotifier<bool>(false);
-  Timer? _sideFallbackTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _repository = widget.videoRepository ?? ExerciseVideoRepository();
-    // Safety net: start SIDE anyway if FRONT never settles (e.g. slow network).
-    _sideFallbackTimer = Timer(const Duration(seconds: 6), _openSideGate);
-  }
-
-  void _openSideGate() {
-    if (!_sideActive.value) _sideActive.value = true;
-  }
-
-  @override
-  void dispose() {
-    _sideFallbackTimer?.cancel();
-    _sideActive.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final exercise = widget.exercise;
@@ -72,10 +39,8 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                 Expanded(
                   child: _AngleVideoSlot(
                     label: ExerciseVideoAngle.front.label,
-                    storagePath: exercise.frontStoragePath,
-                    repository: _repository,
+                    assetPath: 'assets/tutorial_videos/${exercise.id}_front.mp4',
                     clipTopRadius: true,
-                    onSettled: _openSideGate,
                   ),
                 ),
                 Divider(
@@ -84,17 +49,10 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                   color: Colors.grey.shade200,
                 ),
                 Expanded(
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _sideActive,
-                    builder: (context, active, _) {
-                      return _AngleVideoSlot(
-                        label: ExerciseVideoAngle.side.label,
-                        storagePath: exercise.sideStoragePath,
-                        repository: _repository,
-                        muted: true,
-                        active: active,
-                      );
-                    },
+                  child: _AngleVideoSlot(
+                    label: ExerciseVideoAngle.side.label,
+                    assetPath: 'assets/tutorial_videos/${exercise.id}_side.mp4',
+                    muted: true,
                   ),
                 ),
                 Material(
@@ -156,111 +114,46 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
   }
 }
 
-class _AngleVideoSlot extends StatefulWidget {
+class _AngleVideoSlot extends StatelessWidget {
   const _AngleVideoSlot({
     required this.label,
-    required this.storagePath,
-    required this.repository,
+    required this.assetPath,
     this.muted = false,
     this.clipTopRadius = false,
-    this.active = true,
-    this.onSettled,
   });
 
   final String label;
-  final String storagePath;
-  final ExerciseVideoRepository repository;
+  final String assetPath;
   final bool muted;
   final bool clipTopRadius;
-  final bool active;
-  final VoidCallback? onSettled;
-
-  @override
-  State<_AngleVideoSlot> createState() => _AngleVideoSlotState();
-}
-
-class _AngleVideoSlotState extends State<_AngleVideoSlot> {
-  late Future<String> _urlFuture;
-  int _retryGeneration = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _urlFuture = widget.repository.getDownloadUrl(widget.storagePath);
-  }
-
-  void _retry() {
-    setState(() {
-      _retryGeneration++;
-      _urlFuture = widget.repository.getDownloadUrl(
-        widget.storagePath,
-        forceRefresh: true,
-      );
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final height = constraints.maxHeight;
-
         return Stack(
           fit: StackFit.expand,
           children: [
-            FutureBuilder<String>(
-              key: ValueKey('${widget.storagePath}-$_retryGeneration'),
-              future: _urlFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return ExerciseVideoShimmer(
-                    height: height,
-                    clipTopRadius: widget.clipTopRadius,
-                  );
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  final exception = snapshot.error is ExerciseVideoException
-                      ? snapshot.error! as ExerciseVideoException
-                      : null;
-                  return ExerciseVideoErrorPanel(
-                    height: height,
-                    exception: exception,
-                    clipTopRadius: widget.clipTopRadius,
-                    onRetry: _retry,
-                  );
-                }
-
-                return ExerciseVideoPlayer(
-                  key: ValueKey(
-                    'player-${widget.storagePath}-$_retryGeneration',
-                  ),
-                  videoUrl: snapshot.data!,
-                  detailStyle: true,
-                  height: height,
-                  muted: widget.muted,
-                  clipTopRadius: widget.clipTopRadius,
-                  active: widget.active,
-                  onSettled: widget.onSettled,
-                  onPlaybackFailed: _retry,
-                );
-              },
+            ExerciseVideoPlayer(
+              key: ValueKey('player-$assetPath'),
+              videoUrl: assetPath,
+              detailStyle: true,
+              height: height,
+              muted: muted,
+              clipTopRadius: clipTopRadius,
             ),
             Positioned(
               top: 8,
               left: 12,
               child: Text(
-                widget.label.toUpperCase(),
+                label.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: Colors.white,
-                      shadows: const [
-                        Shadow(
-                          blurRadius: 4,
-                          color: Color(0x99000000),
-                        ),
-                      ],
-                    ),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: Colors.white,
+                  shadows: const [Shadow(blurRadius: 4, color: Color(0x99000000))],
+                ),
               ),
             ),
           ],

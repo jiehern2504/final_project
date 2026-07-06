@@ -80,7 +80,7 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
   }
 
   void _initController() {
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+    _controller = VideoPlayerController.asset(widget.videoUrl)
       ..setLooping(_looping)
       ..setVolume(widget.previewMode || widget.muted ? 0 : 1)
       ..initialize().then((_) {
