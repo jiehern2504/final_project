@@ -12,6 +12,7 @@ class PlankMetrics {
   const PlankMetrics({
     required this.bodyAngleDeg,
     required this.elbowAngleDeg,
+    required this.hipsPiking,
   });
 
   /// Shoulder–hip–ankle angle. Should stay close to 180° (flat body line).
@@ -19,6 +20,11 @@ class PlankMetrics {
 
   /// Shoulder–elbow–wrist angle. Forearm plank ≈ 90°; high plank ≈ 160–180°.
   final double elbowAngleDeg;
+
+  /// True when the hip is ABOVE the shoulder→ankle line (butt piked up);
+  /// false when it is below (hips sagging). The [bodyAngleDeg] alone can't tell
+  /// these apart because it's an unsigned angle (always ≤ 180°).
+  final bool hipsPiking;
 }
 
 /// Picks the side with better landmark confidence.
@@ -71,7 +77,19 @@ PlankMetrics? _metricsForSide({
   final double bodyAngle  = angleAtPoseLandmarks(shoulder!, hip!, ankle!);
   final double elbowAngle = angleAtPoseLandmarks(shoulder, elbow!, wrist!);
 
-  return PlankMetrics(bodyAngleDeg: bodyAngle, elbowAngleDeg: elbowAngle);
+  // Is the hip above or below the shoulder→ankle line? (y grows downward, so a
+  // smaller y = higher on screen = piked up.)
+  final double denom = ankle.x - shoulder.x;
+  final double lineY = denom.abs() < 1e-6
+      ? (shoulder.y + ankle.y) / 2
+      : shoulder.y + (ankle.y - shoulder.y) * (hip.x - shoulder.x) / denom;
+  final bool hipsPiking = hip.y < lineY;
+
+  return PlankMetrics(
+    bodyAngleDeg: bodyAngle,
+    elbowAngleDeg: elbowAngle,
+    hipsPiking: hipsPiking,
+  );
 }
 
 double _sideConfidence(Pose pose, {required bool isLeft}) {
@@ -99,7 +117,7 @@ PoseFeedback analyzePlank(Pose pose) {
   final double dev = (m.bodyAngleDeg - 180).abs();
 
   if (dev > (180 - kPlankBodyMinDeg)) {
-    final bool hipsHigh = m.bodyAngleDeg > 180;
+    final bool hipsHigh = m.hipsPiking;
     return PoseFeedback(
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 import 'analysis/pushup_analyzer.dart';
@@ -138,9 +139,6 @@ class SquatRepCounter {
       _isSquatting = false;
       _deepPhaseEnteredAt = null;
       _lastRepTime = now;
-    } else if (!deepSquat) {
-      _isSquatting = false;
-      _deepPhaseEnteredAt = null;
     }
 
     return count != before;
@@ -204,9 +202,6 @@ class LungeRepCounter {
       _isLunging = false;
       _deepPhaseEnteredAt = null;
       _lastRepTime = now;
-    } else if (!deep) {
-      _isLunging = false;
-      _deepPhaseEnteredAt = null;
     }
 
     return count != before;
@@ -270,9 +265,6 @@ class GluteBridgeRepCounter {
       _isRaised = false;
       _topPhaseEnteredAt = null;
       _lastRepTime = now;
-    } else if (!top) {
-      _isRaised = false;
-      _topPhaseEnteredAt = null;
     }
 
     return count != before;
@@ -283,70 +275,89 @@ class GluteBridgeRepCounter {
 
 /// Plank is a TIMED hold. Accumulates seconds spent in good form.
 ///
+/// The held time is NOT wiped by a brief form slip: accumulation simply pauses
+/// while form is off, and only resets to zero if form stays broken for longer
+/// than [kPlankBadFormGrace] (a 5-second grace window).
+///
 /// [seconds] is the display value shown in place of a rep count.
 class PlankHoldTimer {
   int seconds = 0;
-  DateTime? _goodFormStart;
-  bool _inGoodForm = false;
+
+  /// Running good-form total (kept as a double for sub-second precision).
+  double _accumSeconds = 0;
+
+  /// Last frame time while in good form (null while form is broken).
+  DateTime? _lastGoodTick;
+
+  /// When the current run of BAD form began (null while form is good).
+  DateTime? _badFormStart;
 
   void reset() {
     seconds = 0;
-    _goodFormStart = null;
-    _inGoodForm = false;
+    _accumSeconds = 0;
+    _lastGoodTick = null;
+    _badFormStart = null;
   }
 
   void clearPhase() {
-    _goodFormStart = null;
-    _inGoodForm = false;
+    _lastGoodTick = null;
+    _badFormStart = null;
   }
 
   /// Returns true if [seconds] changed this frame.
   bool update(Pose pose) {
     final int before = seconds;
     final PlankMetrics? m = computePlankMetrics(pose);
-
-    if (m == null) {
-      _inGoodForm = false;
-      _goodFormStart = null;
-      return false;
-    }
-
-    final double dev = (m.bodyAngleDeg - 180).abs();
-    final bool goodForm = dev <= (180 - kPlankBodyMinDeg);
-
     final DateTime now = DateTime.now();
 
+    final bool goodForm = m != null &&
+        (m.bodyAngleDeg - 180).abs() <= (180 - kPlankBodyMinDeg);
+
     if (goodForm) {
-      if (!_inGoodForm) {
-        _inGoodForm = true;
-        _goodFormStart = now;
-      } else if (_goodFormStart != null) {
-        seconds = now.difference(_goodFormStart!).inSeconds;
+      _badFormStart = null;
+      if (_lastGoodTick != null) {
+        _accumSeconds +=
+            now.difference(_lastGoodTick!).inMilliseconds / 1000.0;
       }
+      _lastGoodTick = now;
     } else {
-      _inGoodForm = false;
-      _goodFormStart = null;
+      // Pause accumulation; only wipe it after a sustained bad-form streak.
+      _lastGoodTick = null;
+      _badFormStart ??= now;
+      if (now.difference(_badFormStart!) >= kPlankBadFormGrace) {
+        _accumSeconds = 0;
+      }
     }
 
+    seconds = _accumSeconds.floor();
     return seconds != before;
   }
 }
 
 // ── Crunch ─────────────────────────────────────────────────────────────────
 
-/// Crunch rep counting — counts each curl-up + lower cycle.
+/// Crunch rep counting — uses PEAK-RELATIVE detection because a crunch has a
+/// small range of motion. It records the deepest curl (min hip angle) and
+/// counts once the user rises back [kCrunchReleaseDeltaDeg]° from that peak,
+/// provided the peak was a genuine curl ([kRepCrunchUpMaxDeg]). This adapts to
+/// how deep each user curls and avoids double-counting from angle jitter.
 class CrunchRepCounter {
   int count = 0;
-  bool _isCurled = false;
+  double _peakAngle = 999; // deepest (smallest) hip angle since the last rep
+  bool _curledEnough = false;
   DateTime? _lastRepTime;
 
   void reset() {
     count = 0;
-    _isCurled = false;
+    _peakAngle = 999;
+    _curledEnough = false;
     _lastRepTime = null;
   }
 
-  void clearPhase() => _isCurled = false;
+  void clearPhase() {
+    _peakAngle = 999;
+    _curledEnough = false;
+  }
 
   bool _cooldownOk() {
     if (_lastRepTime == null) return true;
@@ -356,7 +367,7 @@ class CrunchRepCounter {
   bool update(Pose pose) {
     final int before = count;
     final CrunchMetrics? m = computeCrunchMetrics(pose);
-    if (m == null) { _isCurled = false; return false; }
+    if (m == null) { debugPrint('CRUNCH null (no metric)'); return false; }
 
     final double conf = _avgLikelihood(<PoseLandmark?>[
       pose.landmarks[PoseLandmarkType.leftShoulder],
@@ -366,17 +377,25 @@ class CrunchRepCounter {
       pose.landmarks[PoseLandmarkType.leftKnee],
       pose.landmarks[PoseLandmarkType.rightKnee],
     ]);
-    if (conf < kRepMinAvgLandmarkLikelihood) { _isCurled = false; return false; }
 
-    final bool curled  = m.hipAngleDeg <= kRepCrunchUpMaxDeg;
-    final bool resting = m.hipAngleDeg >= kRepCrunchDownMinDeg;
+    final double hip = m.hipAngleDeg;
+    debugPrint('CRUNCH hip=${hip.toStringAsFixed(0)} '
+        'peak=${_peakAngle > 900 ? "-" : _peakAngle.toStringAsFixed(0)} '
+        'curled=$_curledEnough count=$count conf=${conf.toStringAsFixed(2)}');
+    if (conf < kRepMinAvgLandmarkLikelihood) return false;
 
-    if (curled) {
-      _isCurled = true;
-    } else if (resting && _isCurled && _cooldownOk()) {
+    // Track the deepest curl of this attempt.
+    if (hip < _peakAngle) _peakAngle = hip;
+    if (_peakAngle <= kRepCrunchUpMaxDeg) _curledEnough = true;
+
+    // Count once the user has released back up from that peak.
+    if (_curledEnough &&
+        hip >= _peakAngle + kCrunchReleaseDeltaDeg &&
+        _cooldownOk()) {
       count++;
-      _isCurled = false;
       _lastRepTime = DateTime.now();
+      _peakAngle = 999;
+      _curledEnough = false;
     }
 
     return count != before;

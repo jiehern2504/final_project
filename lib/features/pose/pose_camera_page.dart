@@ -37,6 +37,8 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
   PoseFeedback _feedback = PoseFeedback.noBody;
   PoseFeedback _pendingFeedback = PoseFeedback.noBody;
   DateTime? _lastUiUpdate;
+  // Keeps the green "Good! Rep counted" banner on screen briefly after a rep.
+  DateTime? _repFlashUntil;
   int _frameIndex = 0;
   bool _processing = false;
 
@@ -175,18 +177,23 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       );
 
       final PoseFeedback next;
+      bool justCounted = false;
       if (poses.isEmpty) {
         next = PoseFeedback.noBody;
         _clearAllPhases();
       } else {
         final Pose pose = poses.first;
-        next = _analyze(pose);
-        _updateCounter(pose);
+        final PoseFeedback formFeedback = _analyze(pose);
+        justCounted = _updateCounter(pose);
+        next = _deriveFeedback(formFeedback, justCounted);
       }
 
       _pendingFeedback = next;
       final DateTime now = DateTime.now();
-      final bool allowBannerUi = _lastUiUpdate == null ||
+      // Force an immediate banner update on a counted rep so the green flash
+      // isn't swallowed by the throttle.
+      final bool allowBannerUi = justCounted ||
+          _lastUiUpdate == null ||
           now.difference(_lastUiUpdate!) >= kPoseUiFeedbackThrottle;
 
       setState(() {
@@ -221,22 +228,70 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     }
   }
 
-  /// Updates only the counter for the active exercise.
-  void _updateCounter(Pose pose) {
+  /// Updates the counter for the active exercise. Returns true when a rep was
+  /// just counted this frame (for timed plank, when the second count changed).
+  bool _updateCounter(Pose pose) {
     switch (widget.exercise) {
       case PoseExerciseType.squat:
-        _squatReps.update(pose);
+        return _squatReps.update(pose);
       case PoseExerciseType.pushUp:
-        _pushUpReps.update(pose);
+        return _pushUpReps.update(pose);
       case PoseExerciseType.lunge:
-        _lungeReps.update(pose);
+        return _lungeReps.update(pose);
       case PoseExerciseType.gluteBridge:
-        _gluteBridgeReps.update(pose);
+        return _gluteBridgeReps.update(pose);
       case PoseExerciseType.plank:
-        _plankTimer.update(pose);
+        return _plankTimer.update(pose);
       case PoseExerciseType.crunch:
-        _crunchReps.update(pose);
+        return _crunchReps.update(pose);
     }
+  }
+
+  /// Combines the analyzer's form judgement with the rep counter into the
+  /// three-state feedback shown to the user:
+  /// - adjust (red): the analyzer found a form problem.
+  /// - almost (yellow): form is fine but the rep hasn't been counted yet.
+  /// - good (green): a rep was just counted (or, for plank, form is being held).
+  PoseFeedback _deriveFeedback(PoseFeedback form, bool justCounted) {
+    // Plank is a timed hold: good form = green (accumulating), else adjust.
+    if (_isTimed) {
+      if (form.kind == PoseFeedbackKind.adjust) return form;
+      return const PoseFeedback(
+        kind: PoseFeedbackKind.good,
+        headlineEn: 'Holding',
+        hintEn: 'Nice — keep your body in a straight line.',
+        hintZh: '保持中，身体成一条直线。',
+      );
+    }
+
+    final DateTime now = DateTime.now();
+    if (justCounted) {
+      _repFlashUntil = now.add(const Duration(milliseconds: 900));
+    }
+
+    // Green flash has TOP priority: the instant a rep is counted, show green —
+    // even though the body (standing back up) may momentarily look like a form
+    // the analyzer would otherwise flag as "adjust". This keeps the green in
+    // sync with the count instead of lagging behind it.
+    if (_repFlashUntil != null && now.isBefore(_repFlashUntil!)) {
+      return const PoseFeedback(
+        kind: PoseFeedbackKind.good,
+        headlineEn: 'Good!',
+        hintEn: 'Rep counted — keep going.',
+        hintZh: '计入一次，继续保持！',
+      );
+    }
+
+    // Form problem → show the specific correction in red.
+    if (form.kind == PoseFeedbackKind.adjust) return form;
+
+    // Form is fine but no rep has registered yet → yellow.
+    return const PoseFeedback(
+      kind: PoseFeedbackKind.almost,
+      headlineEn: 'Almost',
+      hintEn: 'Good form — finish the full movement to count a rep.',
+      hintZh: '姿势不错，完成整个动作才会计入一次。',
+    );
   }
 
   void _clearAllPhases() {
@@ -499,8 +554,15 @@ class _FeedbackBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool good = feedback.kind == PoseFeedbackKind.good;
-    final Color bg = good ? Colors.green.shade800 : Colors.orange.shade900;
+    final Color bg;
+    switch (feedback.kind) {
+      case PoseFeedbackKind.good:
+        bg = Colors.green.shade700;
+      case PoseFeedbackKind.almost:
+        bg = Colors.amber.shade800;
+      case PoseFeedbackKind.adjust:
+        bg = Colors.red.shade700;
+    }
     return Material(
       color: bg.withValues(alpha: 0.92),
       borderRadius: BorderRadius.circular(12),

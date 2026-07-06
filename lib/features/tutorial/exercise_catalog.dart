@@ -87,6 +87,7 @@ const List<TutorialExercise> _allExercises = [
     subtitle: '3 sets • 12–20 reps',
     frontStoragePath: 'tutorial_videos/abs/crunches/front.mp4',
     sideStoragePath: 'tutorial_videos/abs/crunches/side.mp4',
+    poseDetectType: PoseExerciseType.crunch,
   ),
   TutorialExercise(
     id: 'laying_leg_raises',
@@ -103,6 +104,7 @@ const List<TutorialExercise> _allExercises = [
     subtitle: '3 sets • 30–60 sec',
     frontStoragePath: 'tutorial_videos/abs/hand_plank/front.mp4',
     sideStoragePath: 'tutorial_videos/abs/hand_plank/side.mp4',
+    poseDetectType: PoseExerciseType.plank,
   ),
   TutorialExercise(
     id: 'bodyweight_squats',
@@ -120,6 +122,7 @@ const List<TutorialExercise> _allExercises = [
     subtitle: '3 sets • 8–12 reps/side',
     frontStoragePath: 'tutorial_videos/legs/forward_lunges/front.mp4',
     sideStoragePath: 'tutorial_videos/legs/forward_lunges/side.mp4',
+    poseDetectType: PoseExerciseType.lunge,
   ),
   TutorialExercise(
     id: 'bulgarian_split_squats',
@@ -184,6 +187,7 @@ const List<TutorialExercise> _allExercises = [
     subtitle: '3 sets • 10–15 reps',
     frontStoragePath: 'tutorial_videos/glutes/glute_bridges/front.mp4',
     sideStoragePath: 'tutorial_videos/glutes/glute_bridges/side.mp4',
+    poseDetectType: PoseExerciseType.gluteBridge,
   ),
   TutorialExercise(
     id: 'good_mornings',

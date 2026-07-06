@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 import '../pose_constants.dart';
@@ -65,13 +67,13 @@ LungeMetrics? _metricsForSide({
 
   final double kneeAngle = angleAtPoseLandmarks(hip!, knee!, ankle!);
 
-  // Torso lean: angle between shoulder→hip vector and upward vertical.
-  final double dx = shoulder!.x - hip.x;
-  final double dy = shoulder.y - hip.y;          // y increases downward in image coords
-  // Convert to angle from vertical (0° = perfectly upright).
-  final double torsoLean = (dy.abs() < 1e-9)
-      ? 0
-      : (dx / dy).abs() * 57.2957795; // approx atan in degrees for small angles
+  // Torso lean: angle between the shoulder→hip vector and vertical.
+  // 0° = perfectly upright. Uses a proper atan (the previous linear
+  // approximation badly over-estimated anything beyond a tiny lean).
+  final double dx = (shoulder!.x - hip.x).abs();
+  final double dy = (shoulder.y - hip.y).abs(); // y increases downward
+  final double torsoLean =
+      dy < 1e-9 ? 90.0 : math.atan(dx / dy) * 180 / math.pi;
 
   return LungeMetrics(
     frontKneeAngleDeg: kneeAngle,
