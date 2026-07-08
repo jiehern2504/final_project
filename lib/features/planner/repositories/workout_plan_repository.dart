@@ -147,17 +147,51 @@ class WorkoutPlanRepository {
     final int completedDays =
         updatedDays.where((PlanDay d) => d.completed).length;
     final int totalDays = updatedDays.length;
-    final bool allDone =
-        totalDays > 0 && completedDays >= totalDays;
 
+    // Keep the plan 'active' even at 100% so the progress page can ASK the user
+    // what to do next (repeat it or start a new plan) instead of silently
+    // archiving it, which looked like an auto-reset.
     await _plans.doc(planId).update(<String, dynamic>{
       'days': updatedDays.map((PlanDay d) => d.toMap()).toList(),
       'progress': PlanProgress(
         completedDays: completedDays,
         totalDays: totalDays,
       ).toMap(),
-      if (allDone) 'status': 'completed',
     });
+  }
+
+  /// Resets all completed days back to zero and reactivates the plan. Because
+  /// achievements/badges are derived from `progress.completedDays`, this also
+  /// effectively resets them.
+  Future<void> resetPlanProgress(String planId) async {
+    final DocumentSnapshot<Map<String, dynamic>> doc =
+        await _plans.doc(planId).get();
+    if (!doc.exists) return;
+
+    final WorkoutPlan plan = WorkoutPlan.fromFirestore(doc);
+    final List<PlanDay> resetDays = plan.days
+        .map((PlanDay day) => day.copyWith(completed: false))
+        .toList();
+
+    await _plans.doc(planId).update(<String, dynamic>{
+      'days': resetDays.map((PlanDay d) => d.toMap()).toList(),
+      'progress': PlanProgress(
+        completedDays: 0,
+        totalDays: resetDays.length,
+      ).toMap(),
+      'status': 'active',
+    });
+  }
+
+  /// Archives a plan (marks it 'completed') so it leaves the active slot and a
+  /// new plan can take over. Keeps it in history rather than deleting it.
+  Future<void> archivePlan(String planId) async {
+    await _plans.doc(planId).update(<String, dynamic>{'status': 'completed'});
+  }
+
+  /// Permanently deletes a plan document (and therefore its progress).
+  Future<void> deletePlan(String planId) async {
+    await _plans.doc(planId).delete();
   }
 
   Future<Map<String, dynamic>?> fetchUserProfile() async {

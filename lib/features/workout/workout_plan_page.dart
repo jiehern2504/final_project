@@ -693,35 +693,45 @@ class _CondensedDayCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            ...day.exercises.map(
-              (PlanExercise exercise) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.circle,
-
-                      size: 6,
-
-                      color: _withOpacity(_kPrimaryColor, 0.6),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    Expanded(
-                      child: Text(
-                        exercise.title,
-
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            if (day.isRest)
+              Row(
+                children: [
+                  Icon(Icons.bedtime_outlined,
+                      size: 16, color: _withOpacity(_kPrimaryColor, 0.8)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Rest day',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: _withOpacity(_kTextColor, 0.85),
                         ),
+                  ),
+                ],
+              )
+            else
+              ...day.exercises.map(
+                (PlanExercise exercise) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 6,
+                        color: _withOpacity(_kPrimaryColor, 0.6),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          exercise.title,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: _withOpacity(_kTextColor, 0.85),
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

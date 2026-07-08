@@ -20,6 +20,10 @@ class ExerciseDetailPage extends StatefulWidget {
 }
 
 class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
+  // Which video is currently playing: 0 = front, 1 = side, null = none.
+  // Only one plays at a time (tapping one pauses the other).
+  int? _playingSlot;
+
   @override
   Widget build(BuildContext context) {
     final exercise = widget.exercise;
@@ -41,6 +45,9 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                     label: ExerciseVideoAngle.front.label,
                     assetPath: 'assets/tutorial_videos/${exercise.id}_front.mp4',
                     clipTopRadius: true,
+                    forcePaused: _playingSlot != null && _playingSlot != 0,
+                    onPlayingChanged: (playing) =>
+                        setState(() => _playingSlot = playing ? 0 : null),
                   ),
                 ),
                 Divider(
@@ -53,6 +60,9 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                     label: ExerciseVideoAngle.side.label,
                     assetPath: 'assets/tutorial_videos/${exercise.id}_side.mp4',
                     muted: true,
+                    forcePaused: _playingSlot != null && _playingSlot != 1,
+                    onPlayingChanged: (playing) =>
+                        setState(() => _playingSlot = playing ? 1 : null),
                   ),
                 ),
                 Material(
@@ -120,12 +130,16 @@ class _AngleVideoSlot extends StatelessWidget {
     required this.assetPath,
     this.muted = false,
     this.clipTopRadius = false,
+    this.forcePaused = false,
+    this.onPlayingChanged,
   });
 
   final String label;
   final String assetPath;
   final bool muted;
   final bool clipTopRadius;
+  final bool forcePaused;
+  final ValueChanged<bool>? onPlayingChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +156,9 @@ class _AngleVideoSlot extends StatelessWidget {
               height: height,
               muted: muted,
               clipTopRadius: clipTopRadius,
+              autoPlay: false,
+              forcePaused: forcePaused,
+              onPlayingChanged: onPlayingChanged,
             ),
             Positioned(
               top: 8,

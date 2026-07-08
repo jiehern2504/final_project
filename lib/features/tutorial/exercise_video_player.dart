@@ -17,6 +17,9 @@ class ExerciseVideoPlayer extends StatefulWidget {
     this.onPlaybackFailed,
     this.active = true,
     this.onSettled,
+    this.autoPlay = true,
+    this.forcePaused = false,
+    this.onPlayingChanged,
   });
 
   final String videoUrl;
@@ -35,6 +38,19 @@ class ExerciseVideoPlayer extends StatefulWidget {
   /// Fires once the player has "settled" — either it started playing or it
   /// failed. Lets a parent release a gate that was waiting on this player.
   final VoidCallback? onSettled;
+
+  /// When false the video does NOT auto-start: it shows a play button and the
+  /// controller is created lazily on the first tap. This keeps two videos from
+  /// decoding at the same time (which froze one of them on some devices).
+  final bool autoPlay;
+
+  /// When a parent sets this true, the video pauses. Used to enforce that only
+  /// one of several videos plays at a time.
+  final bool forcePaused;
+
+  /// Notifies the parent when THIS video starts (true) or is paused by the user
+  /// (false), so the parent can coordinate mutual-exclusion between videos.
+  final ValueChanged<bool>? onPlayingChanged;
 
   bool get _coverMode => previewMode || detailStyle;
 
@@ -61,7 +77,7 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    if (widget.active) _initController();
+    if (widget.active && widget.autoPlay) _initController();
   }
 
   @override
@@ -72,11 +88,45 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
       _playbackFailedNotified = false;
       _settledNotified = false;
       _autoRetried = false;
-      if (widget.active) _initController();
-    } else if (!oldWidget.active && widget.active && _controller == null) {
+      if (widget.active && widget.autoPlay) _initController();
+    } else if (!oldWidget.active &&
+        widget.active &&
+        widget.autoPlay &&
+        _controller == null) {
       // Gate opened — start now.
       _initController();
     }
+
+    // Parent asked us to pause (another video took over).
+    if (widget.forcePaused && !oldWidget.forcePaused) {
+      final c = _controller;
+      if (c != null && c.value.isInitialized && c.value.isPlaying) {
+        c.pause();
+      }
+    }
+  }
+
+  /// Tap handler for tap-to-play (autoPlay == false).
+  void _togglePlay() {
+    final controller = _controller;
+    if (controller == null) {
+      // First tap → create the controller, initialise and play.
+      _playbackFailedNotified = false;
+      _autoRetried = false;
+      _initController();
+      widget.onPlayingChanged?.call(true);
+      return;
+    }
+    if (!_initialized) return; // still loading
+    setState(() {
+      if (controller.value.isPlaying) {
+        controller.pause();
+        widget.onPlayingChanged?.call(false);
+      } else {
+        controller.play();
+        widget.onPlayingChanged?.call(true);
+      }
+    });
   }
 
   void _initController() {
@@ -163,39 +213,83 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    if (_playbackFailedNotified && widget.onPlaybackFailed != null) {
-      return ExerciseVideoShimmer(
+    final controller = _controller;
+    final bool ready = controller != null && _initialized;
+
+    // Base content: the video if ready, a dark placeholder if not started yet
+    // (tap-to-play), otherwise the loading shimmer.
+    final Widget content;
+    if (ready) {
+      final Widget video = AspectRatio(
+        aspectRatio: controller.value.aspectRatio,
+        child: VideoPlayer(controller),
+      );
+      content = widget._coverMode
+          ? _CoverVideoFrame(
+              height: widget.height,
+              video: video,
+              controllerSize: controller.value.size,
+              clipTop: _clipTop,
+              showPlayOverlay: widget.previewMode,
+            )
+          : AspectRatio(
+              aspectRatio: controller.value.aspectRatio,
+              child: video,
+            );
+    } else if (!widget.autoPlay && _controller == null) {
+      content = _PlaceholderBox(height: widget.height, clipTop: _clipTop);
+    } else {
+      content = ExerciseVideoShimmer(
         height: widget.height,
         clipTopRadius: _clipTop,
       );
     }
 
-    if (_controller == null || !_initialized) {
-      return ExerciseVideoShimmer(
-        height: widget.height,
-        clipTopRadius: _clipTop,
-      );
-    }
+    // Auto-play mode: no tap controls.
+    if (widget.autoPlay) return content;
 
-    final controller = _controller!;
-    final Widget video = AspectRatio(
-      aspectRatio: controller.value.aspectRatio,
-      child: VideoPlayer(controller),
+    // Tap-to-play mode: show a play button when not playing, and toggle on tap.
+    final bool showPlayButton =
+        _controller == null || (ready && !controller.value.isPlaying);
+    return GestureDetector(
+      onTap: _togglePlay,
+      child: Stack(
+        fit: StackFit.expand,
+        alignment: Alignment.center,
+        children: [
+          content,
+          if (showPlayButton) ...[
+            Container(color: Colors.black.withValues(alpha: 0.30)),
+            const Icon(
+              Icons.play_circle_fill_rounded,
+              size: 56,
+              color: Colors.white,
+            ),
+          ],
+        ],
+      ),
     );
+  }
+}
 
-    if (widget._coverMode) {
-      return _CoverVideoFrame(
-        height: widget.height,
-        video: video,
-        controllerSize: controller.value.size,
-        clipTop: _clipTop,
-        showPlayOverlay: widget.previewMode,
-      );
-    }
+/// Plain dark box shown before a tap-to-play video is started (no decoder yet).
+class _PlaceholderBox extends StatelessWidget {
+  const _PlaceholderBox({required this.height, required this.clipTop});
 
-    return AspectRatio(
-      aspectRatio: controller.value.aspectRatio,
-      child: video,
+  final double height;
+  final bool clipTop;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: clipTop
+          ? const BorderRadius.vertical(top: Radius.circular(16))
+          : BorderRadius.zero,
+      child: Container(
+        height: height,
+        width: double.infinity,
+        color: const Color(0xFF1E1E1E),
+      ),
     );
   }
 }

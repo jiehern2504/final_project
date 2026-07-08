@@ -56,6 +56,7 @@ class PlanDay {
     required this.label,
     required this.exercises,
     this.completed = false,
+    this.isRest = false,
   });
 
   final int dayNumber;
@@ -63,12 +64,16 @@ class PlanDay {
   final List<PlanExercise> exercises;
   final bool completed;
 
-  PlanDay copyWith({bool? completed}) {
+  /// A rest day has no exercises — the user just marks it done.
+  final bool isRest;
+
+  PlanDay copyWith({bool? completed, bool? isRest}) {
     return PlanDay(
       dayNumber: dayNumber,
       label: label,
       exercises: exercises,
       completed: completed ?? this.completed,
+      isRest: isRest ?? this.isRest,
     );
   }
 
@@ -76,6 +81,7 @@ class PlanDay {
         'dayNumber': dayNumber,
         'label': label,
         'completed': completed,
+        'isRest': isRest,
         'exercises': exercises.map((PlanExercise e) => e.toMap()).toList(),
       };
 
@@ -86,6 +92,7 @@ class PlanDay {
       dayNumber: (map['dayNumber'] as num?)?.toInt() ?? 0,
       label: map['label'] as String? ?? 'Day',
       completed: map['completed'] as bool? ?? false,
+      isRest: map['isRest'] as bool? ?? false,
       exercises: rawExercises
           .whereType<Map<String, dynamic>>()
           .map(PlanExercise.fromMap)

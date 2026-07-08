@@ -20,6 +20,7 @@ class _BuilderDay {
 
   final String label;
   final List<PlanExercise> exercises;
+  bool isRest = false;
 }
 
 class CreatePlanPage extends StatefulWidget {
@@ -100,47 +101,91 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   Future<void> _addExercise(int dayIndex) async {
     final PlanExercise? picked = await showExercisePickerSheet(context);
     if (picked == null || !mounted) return;
-    setState(() => _days[dayIndex].exercises.add(picked));
+    // Normalise to a fixed "N sets × M reps" format so only the numbers can be
+    // edited later (never the words).
+    final (int sets, int reps) = _parseSetsReps(picked.setsLabel);
+    setState(() {
+      _days[dayIndex].exercises.add(
+        PlanExercise(
+          exerciseId: picked.exerciseId,
+          title: picked.title,
+          setsLabel: _formatSetsReps(sets, reps),
+        ),
+      );
+    });
   }
 
   void _removeExercise(int dayIndex, int exerciseIndex) {
     setState(() => _days[dayIndex].exercises.removeAt(exerciseIndex));
   }
 
+  /// Formats the fixed label — the words "sets" and "reps" are never editable.
+  String _formatSetsReps(int sets, int reps) => '$sets sets × $reps reps';
+
+  /// Extracts the sets/reps numbers from any existing label (defaults 3 × 12).
+  (int, int) _parseSetsReps(String label) {
+    final List<int> nums = RegExp(r'\d+')
+        .allMatches(label)
+        .map((RegExpMatch m) => int.parse(m.group(0)!))
+        .toList();
+    final int sets = (nums.isNotEmpty ? nums.first : 3).clamp(1, 10);
+    final int reps = (nums.length >= 2 ? nums.last : 12).clamp(1, 100);
+    return (sets, reps);
+  }
+
+  /// Lets the user change ONLY the sets and reps numbers via steppers.
   Future<void> _editSetsLabel(int dayIndex, int exerciseIndex) async {
     final PlanExercise exercise = _days[dayIndex].exercises[exerciseIndex];
-    final TextEditingController controller =
-        TextEditingController(text: exercise.setsLabel);
-    final String? result = await showDialog<String>(
+    final (int startSets, int startReps) = _parseSetsReps(exercise.setsLabel);
+    int sets = startSets;
+    int reps = startReps;
+
+    final bool? saved = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Sets / reps'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'e.g. 3 sets • 8–12 reps',
-          ),
+        title: const Text('Sets & reps'),
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _StepperRow(
+                  label: 'Sets',
+                  value: sets,
+                  min: 1,
+                  max: 10,
+                  onChanged: (int v) => setDialogState(() => sets = v),
+                ),
+                const SizedBox(height: 8),
+                _StepperRow(
+                  label: 'Reps',
+                  value: reps,
+                  min: 1,
+                  max: 100,
+                  onChanged: (int v) => setDialogState(() => reps = v),
+                ),
+              ],
+            );
+          },
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, controller.text.trim()),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Save'),
           ),
         ],
       ),
     );
-    controller.dispose();
-    if (result == null || result.isEmpty || !mounted) return;
+    if (saved != true || !mounted) return;
     setState(() {
       _days[dayIndex].exercises[exerciseIndex] = PlanExercise(
         exerciseId: exercise.exerciseId,
         title: exercise.title,
-        setsLabel: result,
+        setsLabel: _formatSetsReps(sets, reps),
       );
     });
   }
@@ -153,11 +198,23 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       );
       return;
     }
-    final bool hasExercise =
-        _days.any((d) => d.exercises.isNotEmpty);
-    if (!hasExercise) {
+    final bool emptyWorkoutDay =
+        _days.any((d) => !d.isRest && d.exercises.isEmpty);
+    if (emptyWorkoutDay) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one exercise.')),
+        const SnackBar(
+          content: Text(
+            'Add exercises to each workout day, or mark it as a rest day.',
+          ),
+        ),
+      );
+      return;
+    }
+    final bool hasWorkout =
+        _days.any((d) => !d.isRest && d.exercises.isNotEmpty);
+    if (!hasWorkout) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add at least one workout day.')),
       );
       return;
     }
@@ -181,7 +238,10 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
           PlanDay(
             dayNumber: i + 1,
             label: _days[i].label,
-            exercises: List<PlanExercise>.from(_days[i].exercises),
+            isRest: _days[i].isRest,
+            exercises: _days[i].isRest
+                ? const <PlanExercise>[]
+                : List<PlanExercise>.from(_days[i].exercises),
           ),
         );
       }
@@ -351,6 +411,16 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
+                      const Text(
+                        'Rest',
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                      Switch(
+                        value: day.isRest,
+                        activeThumbColor: _kPrimaryColor,
+                        onChanged: (bool v) =>
+                            setState(() => _days[dayIndex].isRest = v),
+                      ),
                       if (_days.length > 1)
                         IconButton(
                           onPressed: () => _removeDay(dayIndex),
@@ -360,32 +430,45 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  ...List<Widget>.generate(day.exercises.length, (int ei) {
-                    final PlanExercise ex = day.exercises[ei];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(ex.title),
-                      subtitle: GestureDetector(
-                        onTap: () => _editSetsLabel(dayIndex, ei),
-                        child: Text(
-                          ex.setsLabel,
-                          style: TextStyle(
-                            color: _kPrimaryColor.withValues(alpha: 0.9),
-                            decoration: TextDecoration.underline,
+                  if (day.isRest)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.bedtime_outlined, color: _kPrimaryColor),
+                          SizedBox(width: 8),
+                          Text('Rest day — no exercises'),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    ...List<Widget>.generate(day.exercises.length, (int ei) {
+                      final PlanExercise ex = day.exercises[ei];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(ex.title),
+                        subtitle: GestureDetector(
+                          onTap: () => _editSetsLabel(dayIndex, ei),
+                          child: Text(
+                            ex.setsLabel,
+                            style: TextStyle(
+                              color: _kPrimaryColor.withValues(alpha: 0.9),
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => _removeExercise(dayIndex, ei),
-                      ),
-                    );
-                  }),
-                  TextButton.icon(
-                    onPressed: () => _addExercise(dayIndex),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add exercise'),
-                  ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => _removeExercise(dayIndex, ei),
+                        ),
+                      );
+                    }),
+                    TextButton.icon(
+                      onPressed: () => _addExercise(dayIndex),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add exercise'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -443,6 +526,56 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A fixed-label number stepper (e.g. "Sets  [-] 3 [+]"). The label text is not
+/// editable — only the number changes.
+class _StepperRow extends StatelessWidget {
+  const _StepperRow({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final int min;
+  final int max;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+        IconButton(
+          onPressed: value > min ? () => onChanged(value - 1) : null,
+          icon: const Icon(Icons.remove_circle_outline),
+          color: _kPrimaryColor,
+        ),
+        SizedBox(
+          width: 40,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+        IconButton(
+          onPressed: value < max ? () => onChanged(value + 1) : null,
+          icon: const Icon(Icons.add_circle_outline),
+          color: _kPrimaryColor,
+        ),
+      ],
     );
   }
 }
