@@ -16,6 +16,10 @@ import '../../core/notifications/workout_reminder_service.dart';
 import '../notifications/notifications_page.dart';
 import '../workout/workout_plan_page.dart';
 import '../tutorial/muscle_tutorial_page.dart';
+import '../recommended/recommended_video.dart';
+import '../recommended/recommended_video_page.dart';
+import '../recommended/recommended_list_page.dart';
+import '../recommended/video_thumbnail.dart';
 
 const Color _kPrimaryColor = Color(0xFF4CAF50);
 const Color _kSecondaryColor = Color(0xFFFFB74D);
@@ -156,13 +160,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     actionLabel: 'See All',
                     textColor: _kTextColor,
                     accentColor: _kSecondaryColor,
+                    onAction: () => Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (BuildContext context) =>
+                            const RecommendedListPage(),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 14),
-                  const _RecommendationList(
-                    primaryColor: _kPrimaryColor,
-                    secondaryColor: _kSecondaryColor,
-                    textColor: _kTextColor,
-                  ),
+                  const _RecommendationList(textColor: _kTextColor),
                   const SizedBox(height: 24),
                   _SectionHeader(
                     title: 'Your Progress',
@@ -526,50 +532,21 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _RecommendationList extends StatelessWidget {
-  const _RecommendationList({
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.textColor,
-  });
+  const _RecommendationList({required this.textColor});
 
-  final Color primaryColor;
-  final Color secondaryColor;
   final Color textColor;
-
-  static const List<_WorkoutItem> _items = [
-    _WorkoutItem(
-      title: 'Squat Exercise',
-      duration: '12 minutes',
-      icon: Icons.accessibility_new_rounded,
-      color: Color(0xFFB9E4BC),
-    ),
-    _WorkoutItem(
-      title: 'Push-up Basics',
-      duration: '10 minutes',
-      icon: Icons.fitness_center_rounded,
-      color: Color(0xFFFFE0B2),
-    ),
-    _WorkoutItem(
-      title: 'Stretch & Relax',
-      duration: '8 minutes',
-      icon: Icons.self_improvement_rounded,
-      color: Color(0xFFCDE7FF),
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 210,
+      height: 214,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _items.length,
+        itemCount: kRecommendedVideos.length,
         separatorBuilder: (_, _) => const SizedBox(width: 14),
         itemBuilder: (BuildContext context, int index) {
           return _RecommendationCard(
-            item: _items[index],
-            primaryColor: primaryColor,
-            secondaryColor: secondaryColor,
+            video: kRecommendedVideos[index],
             textColor: textColor,
           );
         },
@@ -578,106 +555,69 @@ class _RecommendationList extends StatelessWidget {
   }
 }
 
-class _WorkoutItem {
-  const _WorkoutItem({
-    required this.title,
-    required this.duration,
-    required this.icon,
-    required this.color,
-  });
-
-  final String title;
-  final String duration;
-  final IconData icon;
-  final Color color;
-}
-
 class _RecommendationCard extends StatelessWidget {
   const _RecommendationCard({
-    required this.item,
-    required this.primaryColor,
-    required this.secondaryColor,
+    required this.video,
     required this.textColor,
   });
 
-  final _WorkoutItem item;
-  final Color primaryColor;
-  final Color secondaryColor;
+  final RecommendedVideo video;
   final Color textColor;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 170,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: _withOpacity(Colors.black, 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) =>
+                RecommendedVideoPage(initial: video),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+        );
+      },
+      child: Container(
+        width: 240,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: _withOpacity(Colors.black, 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: item.color,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Center(
-                  child: Icon(
-                    item.icon,
-                    size: 62,
-                    color: textColor,
-                  ),
-                ),
-              ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: VideoThumbnail(video: video),
             ),
-            const SizedBox(height: 12),
-            Text(
-              item.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(
-                  Icons.timer_outlined,
-                  size: 16,
-                  color: secondaryColor,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    item.duration,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    video.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: textColor,
+                          fontWeight: FontWeight.w700,
                         ),
                   ),
-                ),
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    shape: BoxShape.circle,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${video.channel} · ${video.duration}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: _withOpacity(textColor, 0.6),
+                        ),
                   ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

@@ -29,6 +29,10 @@ dependencies:
   flutter_timezone: ^4.1.0
   shared_preferences: ^2.5.3
 
+  # ── Embedded YouTube player for Recommended Workouts ──
+  youtube_player_iframe: ^5.2.0
+  url_launcher: ^6.3.0
+
 
 dev_dependencies:
   flutter_test:
