@@ -17,6 +17,30 @@ Path _rectN(Size size, Rect nRect) {
     );
 }
 
+/// Like [_rectN] but rotated around its own centre by [angleRadians], so the
+/// rounded bar can follow the natural (slightly splayed) direction of a limb.
+/// Positive angle tilts the bottom of the bar to the LEFT.
+Path _tiltedRectN(Size size, Rect nRect, double angleRadians) {
+  final Rect r = Rect.fromLTWH(
+    nRect.left * size.width,
+    nRect.top * size.height,
+    nRect.width * size.width,
+    nRect.height * size.height,
+  );
+  final Path p = Path()
+    ..addRRect(
+      RRect.fromRectAndRadius(r, Radius.circular(size.shortestSide * 0.04)),
+    );
+  final Offset c = r.center;
+  final Matrix4 m = Matrix4.translationValues(c.dx, c.dy, 0)
+    ..multiply(Matrix4.rotationZ(angleRadians))
+    ..multiply(Matrix4.translationValues(-c.dx, -c.dy, 0));
+  return p.transform(m.storage);
+}
+
+/// How much the arm highlight bars lean outward (~22°), to follow the arms.
+const double _kArmTiltRad = 0.38;
+
 Path _polyN(Size size, List<Offset> nPoints) {
   final Path p = Path();
   for (int i = 0; i < nPoints.length; i++) {
@@ -53,8 +77,9 @@ class MuscleRegions {
       side: BodySide.front,
       pathBuilder: (Size s) => Path.combine(
         PathOperation.union,
-        _rectN(s, const Rect.fromLTWH(0.16, 0.23, 0.12, 0.28)),
-        _rectN(s, const Rect.fromLTWH(0.72, 0.23, 0.12, 0.28)),
+        // left arm tilts bottom outward (left), right arm outward (right)
+        _tiltedRectN(s, const Rect.fromLTWH(0.16, 0.23, 0.12, 0.28), _kArmTiltRad),
+        _tiltedRectN(s, const Rect.fromLTWH(0.75, 0.23, 0.12, 0.28), -_kArmTiltRad),
       ),
     ),
     MuscleRegion(
@@ -104,8 +129,8 @@ class MuscleRegions {
       side: BodySide.back,
       pathBuilder: (Size s) => Path.combine(
         PathOperation.union,
-        _rectN(s, const Rect.fromLTWH(0.14, 0.23, 0.13, 0.28)),
-        _rectN(s, const Rect.fromLTWH(0.73, 0.23, 0.13, 0.28)),
+        _tiltedRectN(s, const Rect.fromLTWH(0.14, 0.23, 0.13, 0.28), _kArmTiltRad),
+        _tiltedRectN(s, const Rect.fromLTWH(0.73, 0.23, 0.13, 0.28), -_kArmTiltRad),
       ),
     ),
     MuscleRegion(
