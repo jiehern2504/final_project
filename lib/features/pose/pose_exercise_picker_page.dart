@@ -13,7 +13,6 @@ class PoseExercisePickerPage extends StatelessWidget {
   // ── Accent colours (one per exercise) ─────────────────────────────────────
   static const Color _squatColor       = Color(0xFFDF5089);
   static const Color _pushUpColor      = Color(0xFF005F9C);
-  static const Color _lungeColor       = Color(0xFF7B3FA0);
   static const Color _gluteBridgeColor = Color(0xFFC0622C);
   static const Color _plankColor       = Color(0xFF1A7A5E);
   static const Color _crunchColor      = Color(0xFF9C6B00);
@@ -61,20 +60,6 @@ class PoseExercisePickerPage extends StatelessWidget {
               color: _pushUpColor,
               icon: Image.asset('assets/pushup.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.pushUp),
-            ),
-            const SizedBox(height: 14),
-
-            // ── Lunge ──────────────────────────────────────────────────────
-            _ExerciseCard(
-              title: 'Lunge',
-              subtitle: 'Front knee angle · torso upright · reps',
-              color: _lungeColor,
-              // TODO: replace with Image.asset('assets/lunge.gif', ...)
-              icon: _PlaceholderIcon(
-                icon: Icons.transfer_within_a_station,
-                label: 'Add lunge.gif to assets/',
-              ),
-              onTap: () => _open(context, PoseExerciseType.lunge),
             ),
             const SizedBox(height: 14),
 

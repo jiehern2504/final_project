@@ -17,8 +17,8 @@ import '../notifications/notifications_page.dart';
 import '../workout/workout_plan_page.dart';
 import '../tutorial/muscle_tutorial_page.dart';
 import '../recommended/recommended_video.dart';
-import '../recommended/recommended_video_page.dart';
 import '../recommended/recommended_list_page.dart';
+import '../recommended/open_video.dart';
 import '../recommended/video_thumbnail.dart';
 
 const Color _kPrimaryColor = Color(0xFF4CAF50);
@@ -567,14 +567,7 @@ class _RecommendationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push<void>(
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                RecommendedVideoPage(initial: video),
-          ),
-        );
-      },
+      onTap: () => openRecommendedVideo(video),
       child: Container(
         width: 240,
         decoration: BoxDecoration(

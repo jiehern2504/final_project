@@ -51,14 +51,6 @@ class RecommendedVideo {
 /// PLACEHOLDER list. These ids point to stable public videos so the thumbnails
 /// and playback work while testing — replace them with real workout videos.
 const List<RecommendedVideo> kRecommendedVideos = <RecommendedVideo>[
-  // TEMP embed test — a video known to ALLOW embedding. Delete this entry once
-  // you've confirmed in-app playback works.
-  RecommendedVideo(
-    id: 'aqz-KE-bpKQ',
-    title: 'Embed test — should play in-app',
-    channel: 'Blender',
-    duration: '10:34',
-  ),
   RecommendedVideo(
     id: 'https://www.youtube.com/watch?v=uep2HH5MW7k',
     title: '10 min full body workout',

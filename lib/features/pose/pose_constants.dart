@@ -29,22 +29,6 @@ const double kPushUpMaxHipDeviationFromStraightDeg = 28;
 /// 0° means perfectly horizontal, 90° means vertical standing posture.
 const double kPushUpBodyAxisMaxFromHorizontalDeg = 42;
 
-// ── Lunge ──────────────────────────────────────────────────────────────────
-
-/// Lunge: front knee angle (hip–knee–ankle) below this → good depth.
-/// Tuned from real ML Kit data (a proper lunge reaches ~70–100°).
-const double kLungeFrontKneeGoodMaxDeg = 120;
-
-/// Lunge: front knee angle above this → not low enough yet.
-const double kLungeFrontKneeTooHighDeg = 145;
-
-/// Lunge: back knee angle (hip–knee–ankle) should be roughly 90°.
-/// Below this value = back knee too collapsed.
-const double kLungeBackKneeMinDeg = 70;
-
-/// Lunge: torso lean from vertical. Excessive forward lean = warn.
-const double kLungeMaxTorsoLeanDeg = 35;
-
 // ── Glute Bridge ───────────────────────────────────────────────────────────
 
 /// Glute Bridge: hip angle (shoulder–hip–knee) at the TOP position.
@@ -125,18 +109,6 @@ const double kRepSquatMaxTorsoLeanForCountDeg = 40;
 
 /// Squat must stay in "deep" phase for at least this long before counting.
 const Duration kRepSquatMinDeepHold = Duration(milliseconds: 220);
-
-// ── Lunge rep counting ─────────────────────────────────────────────────────
-
-/// Lunge: front knee below this angle → "lunge" phase entered.
-const double kRepLungeDeepKneeMaxDeg = 115;
-
-/// Lunge: front knee above this angle → standing reset.
-/// Lowered from 155 → 150 so the rep reliably resets (measured standing ≈ 156–173°).
-const double kRepLungeStandingKneeMinDeg = 150;
-
-/// Lunge must hold deep position for this long before counting.
-const Duration kRepLungeMinDeepHold = Duration(milliseconds: 100);
 
 // ── Glute Bridge rep counting ──────────────────────────────────────────────
 

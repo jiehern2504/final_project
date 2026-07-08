@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'open_video.dart';
 import 'recommended_video.dart';
-import 'recommended_video_page.dart';
 import 'video_thumbnail.dart';
 
 const Color _kText = Color(0xFF333333);
@@ -43,12 +43,7 @@ class _VideoCard extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: () => Navigator.of(context).push<void>(
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                RecommendedVideoPage(initial: video),
-          ),
-        ),
+        onTap: () => openRecommendedVideo(video),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(

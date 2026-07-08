@@ -8,7 +8,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'analysis/pose_feedback.dart';
 import 'analysis/pushup_analyzer.dart';
 import 'analysis/squat_analyzer.dart';
-import 'analysis/lunge_analyzer.dart';
 import 'analysis/glutebridge_analyzer.dart';
 import 'analysis/plank_analyzer.dart';
 import 'analysis/crunch_analyzer.dart';
@@ -49,7 +48,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
   // ── Rep / hold counters ────────────────────────────────────────────────────
   final PushUpRepCounter      _pushUpReps      = PushUpRepCounter();
   final SquatRepCounter       _squatReps       = SquatRepCounter();
-  final LungeRepCounter       _lungeReps       = LungeRepCounter();
   final GluteBridgeRepCounter _gluteBridgeReps = GluteBridgeRepCounter();
   final PlankHoldTimer        _plankTimer      = PlankHoldTimer();
   final CrunchRepCounter      _crunchReps      = CrunchRepCounter();
@@ -217,8 +215,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         return analyzeSquat(pose);
       case PoseExerciseType.pushUp:
         return analyzePushUp(pose);
-      case PoseExerciseType.lunge:
-        return analyzeLunge(pose);
       case PoseExerciseType.gluteBridge:
         return analyzeGluteBridge(pose);
       case PoseExerciseType.plank:
@@ -236,8 +232,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         return _squatReps.update(pose);
       case PoseExerciseType.pushUp:
         return _pushUpReps.update(pose);
-      case PoseExerciseType.lunge:
-        return _lungeReps.update(pose);
       case PoseExerciseType.gluteBridge:
         return _gluteBridgeReps.update(pose);
       case PoseExerciseType.plank:
@@ -297,7 +291,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
   void _clearAllPhases() {
     _pushUpReps.clearPhase();
     _squatReps.clearPhase();
-    _lungeReps.clearPhase();
     _gluteBridgeReps.clearPhase();
     _plankTimer.clearPhase();
     _crunchReps.clearPhase();
@@ -327,7 +320,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     switch (widget.exercise) {
       case PoseExerciseType.squat:       return _squatReps.count;
       case PoseExerciseType.pushUp:      return _pushUpReps.count;
-      case PoseExerciseType.lunge:       return _lungeReps.count;
       case PoseExerciseType.gluteBridge: return _gluteBridgeReps.count;
       case PoseExerciseType.plank:       return _plankTimer.seconds;
       case PoseExerciseType.crunch:      return _crunchReps.count;
@@ -341,7 +333,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     switch (widget.exercise) {
       case PoseExerciseType.squat:       return 'Squat';
       case PoseExerciseType.pushUp:      return 'Push-up';
-      case PoseExerciseType.lunge:       return 'Lunge';
       case PoseExerciseType.gluteBridge: return 'Glute Bridge';
       case PoseExerciseType.plank:       return 'Plank';
       case PoseExerciseType.crunch:      return 'Crunch';
@@ -352,7 +343,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     switch (widget.exercise) {
       case PoseExerciseType.squat:       return Icons.directions_walk;
       case PoseExerciseType.pushUp:      return Icons.fitness_center;
-      case PoseExerciseType.lunge:       return Icons.transfer_within_a_station;
       case PoseExerciseType.gluteBridge: return Icons.airline_seat_flat;
       case PoseExerciseType.plank:       return Icons.horizontal_rule;
       case PoseExerciseType.crunch:      return Icons.airline_seat_recline_extra;
@@ -363,7 +353,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     switch (widget.exercise) {
       case PoseExerciseType.squat:       return const Color(0xffDF5089);
       case PoseExerciseType.pushUp:      return const Color(0xff005F9C);
-      case PoseExerciseType.lunge:       return const Color(0xff7B3FA0);
       case PoseExerciseType.gluteBridge: return const Color(0xffC0622C);
       case PoseExerciseType.plank:       return const Color(0xff1A7A5E);
       case PoseExerciseType.crunch:      return const Color(0xff9C6B00);

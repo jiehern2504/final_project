@@ -122,7 +122,6 @@ const List<TutorialExercise> _allExercises = [
     subtitle: '3 sets • 8–12 reps/side',
     frontStoragePath: 'tutorial_videos/legs/forward_lunges/front.mp4',
     sideStoragePath: 'tutorial_videos/legs/forward_lunges/side.mp4',
-    poseDetectType: PoseExerciseType.lunge,
   ),
   TutorialExercise(
     id: 'bulgarian_split_squats',

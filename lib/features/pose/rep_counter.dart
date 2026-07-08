@@ -3,7 +3,6 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 import 'analysis/pushup_analyzer.dart';
 import 'analysis/squat_analyzer.dart';
-import 'analysis/lunge_analyzer.dart';
 import 'analysis/glutebridge_analyzer.dart';
 import 'analysis/plank_analyzer.dart';
 import 'analysis/crunch_analyzer.dart';
@@ -137,69 +136,6 @@ class SquatRepCounter {
         now.difference(_deepPhaseEnteredAt!) >= kRepSquatMinDeepHold) {
       count++;
       _isSquatting = false;
-      _deepPhaseEnteredAt = null;
-      _lastRepTime = now;
-    }
-
-    return count != before;
-  }
-}
-
-// ── Lunge ──────────────────────────────────────────────────────────────────
-
-/// Lunge rep counting — counts each time a front knee dips and returns up.
-class LungeRepCounter {
-  int count = 0;
-  bool _isLunging = false;
-  DateTime? _lastRepTime;
-  DateTime? _deepPhaseEnteredAt;
-
-  void reset() {
-    count = 0;
-    _isLunging = false;
-    _lastRepTime = null;
-    _deepPhaseEnteredAt = null;
-  }
-
-  void clearPhase() {
-    _isLunging = false;
-    _deepPhaseEnteredAt = null;
-  }
-
-  bool _cooldownOk() {
-    if (_lastRepTime == null) return true;
-    return DateTime.now().difference(_lastRepTime!) >= kRepCooldown;
-  }
-
-  bool update(Pose pose) {
-    final int before = count;
-    final LungeMetrics? m = computeLungeMetrics(pose);
-    if (m == null) { _isLunging = false; return false; }
-
-    final double conf = _avgLikelihood(<PoseLandmark?>[
-      pose.landmarks[PoseLandmarkType.leftHip],
-      pose.landmarks[PoseLandmarkType.rightHip],
-      pose.landmarks[PoseLandmarkType.leftKnee],
-      pose.landmarks[PoseLandmarkType.rightKnee],
-      pose.landmarks[PoseLandmarkType.leftAnkle],
-      pose.landmarks[PoseLandmarkType.rightAnkle],
-    ]);
-    if (conf < kRepMinAvgLandmarkLikelihood) { _isLunging = false; return false; }
-
-    final bool deep     = m.frontKneeAngleDeg < kRepLungeDeepKneeMaxDeg;
-    final bool standing = m.frontKneeAngleDeg > kRepLungeStandingKneeMinDeg;
-    final DateTime now  = DateTime.now();
-
-    if (deep) {
-      if (!_isLunging) {
-        _isLunging = true;
-        _deepPhaseEnteredAt = now;
-      }
-    } else if (standing && _isLunging && _cooldownOk() &&
-        _deepPhaseEnteredAt != null &&
-        now.difference(_deepPhaseEnteredAt!) >= kRepLungeMinDeepHold) {
-      count++;
-      _isLunging = false;
       _deepPhaseEnteredAt = null;
       _lastRepTime = now;
     }
