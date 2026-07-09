@@ -73,7 +73,14 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     setState(() => _step = _CreateStep.builder);
   }
 
+  /// A plan may have at most 7 days (one week).
+  static const int _kMaxDays = 7;
+
+  /// A plan must have at least 3 days to be worth training.
+  static const int _kMinDays = 3;
+
   void _addDay() {
+    if (_days.length >= _kMaxDays) return;
     setState(() {
       _days.add(_BuilderDay(label: 'Day ${_days.length + 1}'));
     });
@@ -198,6 +205,16 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       );
       return;
     }
+    if (_days.length < _kMinDays) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'A plan needs at least 3 days. Add more days before continuing.',
+          ),
+        ),
+      );
+      return;
+    }
     final bool emptyWorkoutDay =
         _days.any((d) => !d.isRest && d.exercises.isEmpty);
     if (emptyWorkoutDay) {
@@ -300,18 +317,33 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _kBackgroundColor,
-      appBar: AppBar(
-        title: Text(_appBarTitle),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: switch (_step) {
-          _CreateStep.gate => _buildGate(),
-          _CreateStep.builder => _buildBuilder(),
-          _CreateStep.workoutTime => _buildWorkoutTimePrompt(),
-        },
+    // Only the first step may leave the page. On later steps, "back" steps
+    // backwards through the flow so the plan the user built is not lost.
+    return PopScope(
+      canPop: _step == _CreateStep.gate,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        setState(() {
+          _step = switch (_step) {
+            _CreateStep.workoutTime => _CreateStep.builder,
+            _CreateStep.builder => _CreateStep.gate,
+            _CreateStep.gate => _CreateStep.gate,
+          };
+        });
+      },
+      child: Scaffold(
+        backgroundColor: _kBackgroundColor,
+        appBar: AppBar(
+          title: Text(_appBarTitle),
+          centerTitle: true,
+        ),
+        body: SafeArea(
+          child: switch (_step) {
+            _CreateStep.gate => _buildGate(),
+            _CreateStep.builder => _buildBuilder(),
+            _CreateStep.workoutTime => _buildWorkoutTimePrompt(),
+          },
+        ),
       ),
     );
   }
@@ -384,7 +416,7 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
             ),
             const Spacer(),
             TextButton.icon(
-              onPressed: _addDay,
+              onPressed: _days.length >= _kMaxDays ? null : _addDay,
               icon: const Icon(Icons.add),
               label: const Text('Add day'),
             ),
