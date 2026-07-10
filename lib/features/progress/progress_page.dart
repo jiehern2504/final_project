@@ -61,7 +61,11 @@ class _ProgressPageState extends State<ProgressPage> {
       final bool nowComplete = plan.progress.totalDays > 0 &&
           plan.progress.completedDays + 1 >= plan.progress.totalDays;
       if (nowComplete && mounted) {
-        await _showCompletionPrompt(plan);
+        if (plan.isSeries && plan.weekNumber < plan.totalWeeks) {
+          await _showWeekCompletePrompt(plan);
+        } else {
+          await _showCompletionPrompt(plan);
+        }
       }
     } catch (_) {
       if (!mounted) return;
@@ -109,6 +113,55 @@ class _ProgressPageState extends State<ProgressPage> {
       await _repeatPlan(plan);
     } else if (choice == 'new') {
       await _goToNewPlan(plan);
+    }
+  }
+
+  /// Asks whether to start the next week after finishing a week in a series.
+  Future<void> _showWeekCompletePrompt(WorkoutPlan plan) async {
+    final int nextWeek = plan.weekNumber + 1;
+    final String? choice = await showDialog<String>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text('Week ${plan.weekNumber} complete! 🎉'),
+        content: Text(
+          'Great work finishing Week ${plan.weekNumber} of ${plan.totalWeeks}.\n\n'
+          'Start Week $nextWeek now, or take a break and start it later?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop('later'),
+            child: const Text('Later'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop('next'),
+            child: Text('Start Week $nextWeek'),
+          ),
+        ],
+      ),
+    );
+    if (choice == 'next') {
+      await _advanceWeek(plan);
+    }
+  }
+
+  /// Completes the current week and unlocks/activates the next one.
+  Future<void> _advanceWeek(WorkoutPlan plan) async {
+    try {
+      await _repository.advanceToNextWeek(plan);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Week ${plan.weekNumber + 1} unlocked. Good luck!'),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not start the next week. Try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -294,13 +347,29 @@ class _ProgressPageState extends State<ProgressPage> {
                         color: Colors.black54,
                       ),
                 ),
+                if (plan.totalWeeks > 1) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Week ${plan.weekNumber} of ${plan.totalWeeks}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: _kPrimaryColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 if (plan.progress.totalDays > 0 &&
                     plan.progress.completedDays >= plan.progress.totalDays)
-                  _CompletionBanner(
-                    onRepeat: () => _repeatPlan(plan),
-                    onNewPlan: () => _goToNewPlan(plan),
-                  )
+                  (plan.isSeries && plan.weekNumber < plan.totalWeeks
+                      ? _WeekAdvanceBanner(
+                          nextWeek: plan.weekNumber + 1,
+                          totalWeeks: plan.totalWeeks,
+                          onStartNext: () => _advanceWeek(plan),
+                        )
+                      : _CompletionBanner(
+                          onRepeat: () => _repeatPlan(plan),
+                          onNewPlan: () => _goToNewPlan(plan),
+                        ))
                 else if (!plan.isStarted)
                   FilledButton.icon(
                     onPressed: _starting ? null : () => _startPlan(plan),
@@ -429,6 +498,61 @@ class _CompletionBanner extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeekAdvanceBanner extends StatelessWidget {
+  const _WeekAdvanceBanner({
+    required this.nextWeek,
+    required this.totalWeeks,
+    required this.onStartNext,
+  });
+
+  final int nextWeek;
+  final int totalWeeks;
+  final VoidCallback onStartNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kPrimaryColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kPrimaryColor.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.emoji_events, color: _kPrimaryColor),
+              const SizedBox(width: 8),
+              Text(
+                'Week done!',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Nice work — you finished this week. Ready for Week $nextWeek '
+            'of $totalWeeks?',
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onStartNext,
+              style: FilledButton.styleFrom(backgroundColor: _kPrimaryColor),
+              child: Text('Start Week $nextWeek'),
+            ),
           ),
         ],
       ),

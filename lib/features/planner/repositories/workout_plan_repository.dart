@@ -82,7 +82,10 @@ class WorkoutPlanRepository {
     return _latestFromPlans(docs.map(WorkoutPlan.fromFirestore).toList());
   }
 
-  WorkoutPlan? _latestFromPlans(List<WorkoutPlan> plans) {
+  WorkoutPlan? _latestFromPlans(List<WorkoutPlan> input) {
+    // Locked weeks of a multi-week series are hidden until unlocked.
+    final List<WorkoutPlan> plans =
+        input.where((WorkoutPlan p) => !p.locked).toList();
     if (plans.isEmpty) return null;
     plans.sort((WorkoutPlan a, WorkoutPlan b) {
       final DateTime aTime =
@@ -104,6 +107,104 @@ class WorkoutPlanRepository {
     }
     await _plans.doc(plan.id).set(data, SetOptions(merge: true));
     return plan.id;
+  }
+
+  /// A fresh Firestore document id, used to tag all weeks of one series before
+  /// any of them are saved.
+  String newPlanId() => _plans.doc().id;
+
+  /// Saves every week of a multi-week series and returns the hydrated Week 1
+  /// plan (the only unlocked week the user can start).
+  Future<WorkoutPlan> saveSeries(
+    List<WorkoutPlan> weeks, {
+    String source = 'ai',
+  }) async {
+    WorkoutPlan? firstWeek;
+    for (final WorkoutPlan week in weeks) {
+      final Map<String, dynamic> data = week.toMap();
+      data['source'] = source;
+      data['createdAt'] = FieldValue.serverTimestamp();
+      final DocumentReference<Map<String, dynamic>> ref = await _plans.add(data);
+      if (week.weekNumber == 1) {
+        firstWeek = week.copyWith(id: ref.id, createdAt: DateTime.now());
+      }
+    }
+    if (firstWeek == null) {
+      throw StateError('Series is missing Week 1.');
+    }
+    return firstWeek;
+  }
+
+  /// Saves a hand-built multi-week plan (one [PlanDay] list per week) as a
+  /// locked series: Week 1 is a draft the user can start, later weeks unlock as
+  /// each week is completed.
+  Future<WorkoutPlan> saveManualSeries({
+    required String title,
+    required List<List<PlanDay>> weeks,
+  }) async {
+    final String? uid = _uid;
+    if (uid == null) {
+      throw StateError('You must be signed in to save a plan.');
+    }
+    final String seriesId = newPlanId();
+    final int total = weeks.length;
+    final DateTime now = DateTime.now();
+
+    final List<WorkoutPlan> weekPlans = List<WorkoutPlan>.generate(total, (int i) {
+      final int weekNumber = i + 1;
+      final List<PlanDay> days = weeks[i];
+      return WorkoutPlan(
+        id: '',
+        userId: uid,
+        title: title,
+        status: WorkoutPlanStatus.draft,
+        days: days,
+        progress: PlanProgress(completedDays: 0, totalDays: days.length),
+        createdAt: now,
+        seriesId: seriesId,
+        weekNumber: weekNumber,
+        totalWeeks: total,
+        locked: weekNumber > 1,
+      );
+    });
+
+    return saveSeries(weekPlans, source: 'manual');
+  }
+
+  /// Completes [current] and unlocks/activates the next week in the same series
+  /// (if any). Called when the user finishes a week and chooses to continue.
+  Future<void> advanceToNextWeek(WorkoutPlan current) async {
+    final String? uid = _uid;
+    final String? seriesId = current.seriesId;
+    if (uid == null || seriesId == null) return;
+
+    // Single-field query (no composite index needed); filter the series client
+    // side to find the next week.
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _plans.where('userId', isEqualTo: uid).get();
+    QueryDocumentSnapshot<Map<String, dynamic>>? nextDoc;
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in snapshot.docs) {
+      final Map<String, dynamic> data = doc.data();
+      final int week = (data['weekNumber'] as num?)?.toInt() ?? 0;
+      if (data['seriesId'] == seriesId && week == current.weekNumber + 1) {
+        nextDoc = doc;
+        break;
+      }
+    }
+
+    final WriteBatch batch = _firestore.batch();
+    batch.update(_plans.doc(current.id), <String, dynamic>{
+      'status': 'completed',
+    });
+    if (nextDoc != null) {
+      batch.update(nextDoc.reference, <String, dynamic>{
+        'locked': false,
+        'status': 'active',
+        'startedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 
   Future<void> startPlan(String planId) async {

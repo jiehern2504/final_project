@@ -21,7 +21,11 @@ import '../../progress/progress_page.dart';
 /// from the tutorial catalogue and matched to the user's profile — and lets
 /// the user adopt it into progress tracking.
 class AiChatPage extends StatefulWidget {
-  const AiChatPage({super.key});
+  const AiChatPage({super.key, this.initialMessage});
+
+  /// If provided, this text is sent automatically as the user's first message
+  /// when the page opens (e.g. "help me to build workout plan").
+  final String? initialMessage;
 
   @override
   State<AiChatPage> createState() => _AiChatPageState();
@@ -62,6 +66,20 @@ class _AiChatPageState extends State<AiChatPage> {
   static const Color _kBackground = Color(0xFFF9FBF9);
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+  @override
+  void initState() {
+    super.initState();
+    final String? initial = widget.initialMessage?.trim();
+    if (initial != null && initial.isNotEmpty) {
+      // Send after the first frame so the chat UI is built before we start.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _inputController.text = initial;
+        _send();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -152,19 +170,31 @@ class _AiChatPageState extends State<AiChatPage> {
   /// Generates a trackable workout plan and shows it as a plan card.
   Future<void> _generatePlanReply(String userPrompt) async {
     try {
-      final WorkoutPlan plan = await _planService.generateAndSavePlan(
+      final GeneratedPlan result = await _planService.generateAndSavePlan(
         userPrompt: userPrompt,
       );
       _removeLastMessage();
-      _addMessage(
-        const ChatMessage(
-          text: "Here's a plan built only from your tutorial exercises and "
+
+      // Longer-than-a-month requests are capped at 4 weeks.
+      if (result.exceededMonth) {
+        _addMessage(
+          const ChatMessage(
+            text: "Plans longer than a month aren't recommended for "
+                "beginners, so I've kept it to 4 weeks.",
+            isUser: false,
+          ),
+        );
+      }
+
+      final String intro = result.totalWeeks > 1
+          ? "Here's a ${result.totalWeeks}-week progressive plan built from "
+              "your tutorial exercises. Only Week 1 is unlocked — finish it to "
+              "unlock Week 2, and so on. Add Week 1 to your progress to start."
+          : "Here's a plan built only from your tutorial exercises and "
               "matched to your profile. Add it to your progress to start "
-              "tracking each day.",
-          isUser: false,
-        ),
-      );
-      _addMessage(ChatMessage.planResult(plan));
+              "tracking each day.";
+      _addMessage(ChatMessage(text: intro, isUser: false));
+      _addMessage(ChatMessage.planResult(result.plan));
     } on WorkoutPlanServiceException catch (e) {
       _removeLastMessage();
       _addMessage(ChatMessage.error(e.message));

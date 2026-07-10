@@ -139,6 +139,10 @@ class WorkoutPlan {
     required this.progress,
     this.startedAt,
     this.createdAt,
+    this.seriesId,
+    this.weekNumber = 1,
+    this.totalWeeks = 1,
+    this.locked = false,
   });
 
   final String id;
@@ -150,7 +154,49 @@ class WorkoutPlan {
   final DateTime? startedAt;
   final DateTime? createdAt;
 
+  /// Links the weeks of a multi-week plan. Null for standalone (single-week)
+  /// plans. All weeks of the same month share one [seriesId].
+  final String? seriesId;
+
+  /// 1-based position of this week within its series (1 for single-week plans).
+  final int weekNumber;
+
+  /// How many weeks the whole series has (1 for single-week plans).
+  final int totalWeeks;
+
+  /// A locked week is not yet available — it stays hidden until the previous
+  /// week is completed and the user chooses to start it.
+  final bool locked;
+
+  /// True when this plan is one week of a multi-week series.
+  bool get isSeries => totalWeeks > 1 && seriesId != null;
+
   bool get isStarted => status == WorkoutPlanStatus.active;
+
+  WorkoutPlan copyWith({
+    String? id,
+    WorkoutPlanStatus? status,
+    List<PlanDay>? days,
+    PlanProgress? progress,
+    DateTime? startedAt,
+    DateTime? createdAt,
+    bool? locked,
+  }) {
+    return WorkoutPlan(
+      id: id ?? this.id,
+      userId: userId,
+      title: title,
+      status: status ?? this.status,
+      days: days ?? this.days,
+      progress: progress ?? this.progress,
+      startedAt: startedAt ?? this.startedAt,
+      createdAt: createdAt ?? this.createdAt,
+      seriesId: seriesId,
+      weekNumber: weekNumber,
+      totalWeeks: totalWeeks,
+      locked: locked ?? this.locked,
+    );
+  }
 
   PlanDay? dayByNumber(int dayNumber) {
     for (final PlanDay day in days) {
@@ -165,6 +211,10 @@ class WorkoutPlan {
         'status': workoutPlanStatusToString(status),
         'days': days.map((PlanDay d) => d.toMap()).toList(),
         'progress': progress.toMap(),
+        'weekNumber': weekNumber,
+        'totalWeeks': totalWeeks,
+        'locked': locked,
+        if (seriesId != null) 'seriesId': seriesId,
         if (startedAt != null)
           'startedAt': Timestamp.fromDate(startedAt!),
         if (createdAt != null)
@@ -192,6 +242,10 @@ class WorkoutPlan {
       progress: PlanProgress.fromMap(progressMap),
       startedAt: (data['startedAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      seriesId: data['seriesId'] as String?,
+      weekNumber: (data['weekNumber'] as num?)?.toInt() ?? 1,
+      totalWeeks: (data['totalWeeks'] as num?)?.toInt() ?? 1,
+      locked: data['locked'] as bool? ?? false,
     );
   }
 }

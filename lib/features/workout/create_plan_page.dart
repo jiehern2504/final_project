@@ -14,6 +14,12 @@ const Color _kTextColor = Color(0xFF333333);
 
 enum _CreateStep { gate, builder, workoutTime }
 
+/// How long the manual plan runs.
+enum _PlanLength { oneWeek, oneMonth }
+
+/// When the plan is a month, how the 4 weeks are built.
+enum _MonthMode { repeatWeek, customWeeks }
+
 class _BuilderDay {
   _BuilderDay({required this.label})
       : exercises = <PlanExercise>[];
@@ -44,8 +50,20 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   _CreateStep _step = _CreateStep.gate;
   final TextEditingController _titleController =
       TextEditingController(text: 'My workout plan');
-  final List<_BuilderDay> _days = <_BuilderDay>[_BuilderDay(label: 'Day 1')];
+
+  /// Days grouped by week. Week 1 always exists; extra weeks are only used in
+  /// the "1 month · custom weeks" mode.
+  final List<List<_BuilderDay>> _weeks = <List<_BuilderDay>>[
+    <_BuilderDay>[_BuilderDay(label: 'Day 1')],
+  ];
+
+  _PlanLength _length = _PlanLength.oneWeek;
+  _MonthMode _monthMode = _MonthMode.repeatWeek;
   bool _saving = false;
+
+  /// True when the user is hand-building 4 different weeks.
+  bool get _isCustomWeeks =>
+      _length == _PlanLength.oneMonth && _monthMode == _MonthMode.customWeeks;
 
   @override
   void initState() {
@@ -64,7 +82,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   void _chooseAiHelp() {
     Navigator.of(context).pushReplacement<void, void>(
       MaterialPageRoute<void>(
-        builder: (BuildContext context) => const AiChatPage(),
+        builder: (BuildContext context) => const AiChatPage(
+          initialMessage: 'help me to build workout plan',
+        ),
       ),
     );
   }
@@ -73,27 +93,44 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     setState(() => _step = _CreateStep.builder);
   }
 
-  /// A plan may have at most 7 days (one week).
+  /// A week may have at most 7 days.
   static const int _kMaxDays = 7;
 
-  /// A plan must have at least 3 days to be worth training.
+  /// A week must have at least 3 days to be worth training.
   static const int _kMinDays = 3;
 
-  void _addDay() {
-    if (_days.length >= _kMaxDays) return;
+  /// A one-month plan is 4 weeks.
+  static const int _kCustomWeeks = 4;
+
+  /// Switches the plan length, padding [_weeks] to 4 when a month is chosen.
+  void _setLength(_PlanLength length) {
     setState(() {
-      _days.add(_BuilderDay(label: 'Day ${_days.length + 1}'));
+      _length = length;
+      if (length == _PlanLength.oneMonth) {
+        while (_weeks.length < _kCustomWeeks) {
+          _weeks.add(<_BuilderDay>[_BuilderDay(label: 'Day 1')]);
+        }
+      }
     });
   }
 
-  void _removeDay(int index) {
-    if (_days.length <= 1) return;
+  void _addDay(int weekIndex) {
+    final List<_BuilderDay> days = _weeks[weekIndex];
+    if (days.length >= _kMaxDays) return;
     setState(() {
-      final List<List<PlanExercise>> exerciseLists = _days
+      days.add(_BuilderDay(label: 'Day ${days.length + 1}'));
+    });
+  }
+
+  void _removeDay(int weekIndex, int dayIndex) {
+    final List<_BuilderDay> days = _weeks[weekIndex];
+    if (days.length <= 1) return;
+    setState(() {
+      final List<List<PlanExercise>> exerciseLists = days
           .map((d) => List<PlanExercise>.from(d.exercises))
           .toList()
-        ..removeAt(index);
-      _days
+        ..removeAt(dayIndex);
+      days
         ..clear()
         ..addAll(
           List<_BuilderDay>.generate(
@@ -105,14 +142,14 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     });
   }
 
-  Future<void> _addExercise(int dayIndex) async {
+  Future<void> _addExercise(int weekIndex, int dayIndex) async {
     final PlanExercise? picked = await showExercisePickerSheet(context);
     if (picked == null || !mounted) return;
     // Normalise to a fixed "N sets × M reps" format so only the numbers can be
     // edited later (never the words).
     final (int sets, int reps) = _parseSetsReps(picked.setsLabel);
     setState(() {
-      _days[dayIndex].exercises.add(
+      _weeks[weekIndex][dayIndex].exercises.add(
         PlanExercise(
           exerciseId: picked.exerciseId,
           title: picked.title,
@@ -122,8 +159,10 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     });
   }
 
-  void _removeExercise(int dayIndex, int exerciseIndex) {
-    setState(() => _days[dayIndex].exercises.removeAt(exerciseIndex));
+  void _removeExercise(int weekIndex, int dayIndex, int exerciseIndex) {
+    setState(
+      () => _weeks[weekIndex][dayIndex].exercises.removeAt(exerciseIndex),
+    );
   }
 
   /// Formats the fixed label — the words "sets" and "reps" are never editable.
@@ -141,8 +180,13 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   }
 
   /// Lets the user change ONLY the sets and reps numbers via steppers.
-  Future<void> _editSetsLabel(int dayIndex, int exerciseIndex) async {
-    final PlanExercise exercise = _days[dayIndex].exercises[exerciseIndex];
+  Future<void> _editSetsLabel(
+    int weekIndex,
+    int dayIndex,
+    int exerciseIndex,
+  ) async {
+    final PlanExercise exercise =
+        _weeks[weekIndex][dayIndex].exercises[exerciseIndex];
     final (int startSets, int startReps) = _parseSetsReps(exercise.setsLabel);
     int sets = startSets;
     int reps = startReps;
@@ -189,7 +233,7 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     );
     if (saved != true || !mounted) return;
     setState(() {
-      _days[dayIndex].exercises[exerciseIndex] = PlanExercise(
+      _weeks[weekIndex][dayIndex].exercises[exerciseIndex] = PlanExercise(
         exerciseId: exercise.exerciseId,
         title: exercise.title,
         setsLabel: _formatSetsReps(sets, reps),
@@ -197,45 +241,58 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     });
   }
 
+  /// The weeks whose content the user actually authored. In "repeat" mode only
+  /// Week 1 is authored (it gets copied ×4 on save); in "custom" mode all 4.
+  List<List<_BuilderDay>> get _sourceWeeks =>
+      _isCustomWeeks ? _weeks.sublist(0, _kCustomWeeks) : <List<_BuilderDay>>[_weeks[0]];
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _goToWorkoutTimeStep() {
     final String title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a plan title.')),
-      );
+      _showError('Enter a plan title.');
       return;
     }
-    if (_days.length < _kMinDays) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'A plan needs at least 3 days. Add more days before continuing.',
-          ),
-        ),
-      );
-      return;
-    }
-    final bool emptyWorkoutDay =
-        _days.any((d) => !d.isRest && d.exercises.isEmpty);
-    if (emptyWorkoutDay) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Add exercises to each workout day, or mark it as a rest day.',
-          ),
-        ),
-      );
-      return;
-    }
-    final bool hasWorkout =
-        _days.any((d) => !d.isRest && d.exercises.isNotEmpty);
-    if (!hasWorkout) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one workout day.')),
-      );
-      return;
+
+    final List<List<_BuilderDay>> weeks = _sourceWeeks;
+    final bool multi = weeks.length > 1;
+    for (int w = 0; w < weeks.length; w++) {
+      final List<_BuilderDay> days = weeks[w];
+      final String where = multi ? 'Week ${w + 1}: ' : '';
+      if (days.length < _kMinDays) {
+        _showError('${where}a plan needs at least 3 days. Add more days.');
+        return;
+      }
+      if (days.any((d) => !d.isRest && d.exercises.isEmpty)) {
+        _showError(
+          '${where}add exercises to each workout day, or mark it as a rest day.',
+        );
+        return;
+      }
+      if (!days.any((d) => !d.isRest && d.exercises.isNotEmpty)) {
+        _showError('${where}add at least one workout day.');
+        return;
+      }
     }
     setState(() => _step = _CreateStep.workoutTime);
+  }
+
+  /// Converts one authored week into savable [PlanDay]s (days numbered 1..N).
+  List<PlanDay> _toPlanDays(List<_BuilderDay> week) {
+    return List<PlanDay>.generate(week.length, (int i) {
+      final _BuilderDay d = week[i];
+      return PlanDay(
+        dayNumber: i + 1,
+        label: d.label,
+        isRest: d.isRest,
+        exercises: d.isRest
+            ? const <PlanExercise>[]
+            : List<PlanExercise>.from(d.exercises),
+      );
+    });
   }
 
   Future<void> _savePlan() async {
@@ -249,24 +306,26 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
 
     setState(() => _saving = true);
     try {
-      final List<PlanDay> planDays = <PlanDay>[];
-      for (int i = 0; i < _days.length; i++) {
-        planDays.add(
-          PlanDay(
-            dayNumber: i + 1,
-            label: _days[i].label,
-            isRest: _days[i].isRest,
-            exercises: _days[i].isRest
-                ? const <PlanExercise>[]
-                : List<PlanExercise>.from(_days[i].exercises),
-          ),
+      final String title = _titleController.text.trim();
+      if (_length == _PlanLength.oneWeek) {
+        await _planRepository.saveManualPlan(
+          title: title,
+          days: _toPlanDays(_weeks[0]),
         );
+      } else {
+        final List<List<PlanDay>> weekDays;
+        if (_monthMode == _MonthMode.repeatWeek) {
+          final List<PlanDay> oneWeek = _toPlanDays(_weeks[0]);
+          weekDays =
+              List<List<PlanDay>>.generate(_kCustomWeeks, (_) => oneWeek);
+        } else {
+          weekDays = List<List<PlanDay>>.generate(
+            _kCustomWeeks,
+            (int w) => _toPlanDays(_weeks[w]),
+          );
+        }
+        await _planRepository.saveManualSeries(title: title, weeks: weekDays);
       }
-
-      await _planRepository.saveManualPlan(
-        title: _titleController.text.trim(),
-        days: planDays,
-      );
 
       await _prefsRepository.saveWorkoutReminder(
         enabled: timeResult.reminderEnabled,
@@ -406,106 +465,21 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
           ),
         ),
         const SizedBox(height: 20),
-        Row(
-          children: [
-            Text(
-              'Workout days',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: _days.length >= _kMaxDays ? null : _addDay,
-              icon: const Icon(Icons.add),
-              label: const Text('Add day'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ...List<Widget>.generate(_days.length, (int dayIndex) {
-          final _BuilderDay day = _days[dayIndex];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 14),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          day.label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      const Text(
-                        'Rest',
-                        style: TextStyle(fontSize: 13, color: Colors.black54),
-                      ),
-                      Switch(
-                        value: day.isRest,
-                        activeThumbColor: _kPrimaryColor,
-                        onChanged: (bool v) =>
-                            setState(() => _days[dayIndex].isRest = v),
-                      ),
-                      if (_days.length > 1)
-                        IconButton(
-                          onPressed: () => _removeDay(dayIndex),
-                          icon: const Icon(Icons.delete_outline),
-                          tooltip: 'Remove day',
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (day.isRest)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.bedtime_outlined, color: _kPrimaryColor),
-                          SizedBox(width: 8),
-                          Text('Rest day — no exercises'),
-                        ],
-                      ),
-                    )
-                  else ...[
-                    ...List<Widget>.generate(day.exercises.length, (int ei) {
-                      final PlanExercise ex = day.exercises[ei];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(ex.title),
-                        subtitle: GestureDetector(
-                          onTap: () => _editSetsLabel(dayIndex, ei),
-                          child: Text(
-                            ex.setsLabel,
-                            style: TextStyle(
-                              color: _kPrimaryColor.withValues(alpha: 0.9),
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => _removeExercise(dayIndex, ei),
-                        ),
-                      );
-                    }),
-                    TextButton.icon(
-                      onPressed: () => _addExercise(dayIndex),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add exercise'),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        }),
+        _lengthSelector(),
+        if (_length == _PlanLength.oneMonth) ...[
+          const SizedBox(height: 16),
+          _monthModeSelector(),
+        ],
+        const SizedBox(height: 16),
+        if (_isCustomWeeks)
+          ...List<Widget>.generate(
+            _kCustomWeeks,
+            (int w) => _weekBlock(w, header: 'Week ${w + 1}', grouped: true),
+          )
+        else ...[
+          if (_length == _PlanLength.oneMonth) _repeatNote(),
+          _weekBlock(0, header: 'Workout days'),
+        ],
         const SizedBox(height: 8),
         FilledButton(
           onPressed: _saving ? null : _goToWorkoutTimeStep,
@@ -516,6 +490,220 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
           child: const Text('Continue'),
         ),
       ],
+    );
+  }
+
+  Widget _lengthSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Plan length',
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<_PlanLength>(
+          segments: const <ButtonSegment<_PlanLength>>[
+            ButtonSegment<_PlanLength>(
+              value: _PlanLength.oneWeek,
+              label: Text('1 week'),
+              icon: Icon(Icons.view_week_outlined),
+            ),
+            ButtonSegment<_PlanLength>(
+              value: _PlanLength.oneMonth,
+              label: Text('1 month'),
+              icon: Icon(Icons.calendar_month_outlined),
+            ),
+          ],
+          selected: <_PlanLength>{_length},
+          onSelectionChanged: (Set<_PlanLength> s) => _setLength(s.first),
+        ),
+      ],
+    );
+  }
+
+  Widget _monthModeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'How to fill the month',
+          style: Theme.of(context)
+              .textTheme
+              .titleSmall
+              ?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<_MonthMode>(
+          segments: const <ButtonSegment<_MonthMode>>[
+            ButtonSegment<_MonthMode>(
+              value: _MonthMode.repeatWeek,
+              label: Text('Repeat 1 week'),
+            ),
+            ButtonSegment<_MonthMode>(
+              value: _MonthMode.customWeeks,
+              label: Text('4 custom weeks'),
+            ),
+          ],
+          selected: <_MonthMode>{_monthMode},
+          onSelectionChanged: (Set<_MonthMode> s) =>
+              setState(() => _monthMode = s.first),
+        ),
+      ],
+    );
+  }
+
+  Widget _repeatNote() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: _kPrimaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'This week repeats for 4 weeks. Finish each week to unlock the next.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.black54),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Renders one week: a header (with "Add day") plus its day cards. When
+  /// [grouped] is true the block is boxed so the 4 custom weeks are distinct.
+  Widget _weekBlock(int weekIndex, {required String header, bool grouped = false}) {
+    final List<_BuilderDay> days = _weeks[weekIndex];
+    final Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              header,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: days.length >= _kMaxDays ? null : () => _addDay(weekIndex),
+              icon: const Icon(Icons.add),
+              label: const Text('Add day'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...List<Widget>.generate(
+          days.length,
+          (int dayIndex) => _dayCard(weekIndex, dayIndex),
+        ),
+      ],
+    );
+
+    if (!grouped) return content;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kPrimaryColor.withValues(alpha: 0.3)),
+      ),
+      child: content,
+    );
+  }
+
+  Widget _dayCard(int weekIndex, int dayIndex) {
+    final _BuilderDay day = _weeks[weekIndex][dayIndex];
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    day.label,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const Text(
+                  'Rest',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+                Switch(
+                  value: day.isRest,
+                  activeThumbColor: _kPrimaryColor,
+                  onChanged: (bool v) =>
+                      setState(() => _weeks[weekIndex][dayIndex].isRest = v),
+                ),
+                if (_weeks[weekIndex].length > 1)
+                  IconButton(
+                    onPressed: () => _removeDay(weekIndex, dayIndex),
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: 'Remove day',
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (day.isRest)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.bedtime_outlined, color: _kPrimaryColor),
+                    SizedBox(width: 8),
+                    Text('Rest day — no exercises'),
+                  ],
+                ),
+              )
+            else ...[
+              ...List<Widget>.generate(day.exercises.length, (int ei) {
+                final PlanExercise ex = day.exercises[ei];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(ex.title),
+                  subtitle: GestureDetector(
+                    onTap: () => _editSetsLabel(weekIndex, dayIndex, ei),
+                    child: Text(
+                      ex.setsLabel,
+                      style: TextStyle(
+                        color: _kPrimaryColor.withValues(alpha: 0.9),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => _removeExercise(weekIndex, dayIndex, ei),
+                  ),
+                );
+              }),
+              TextButton.icon(
+                onPressed: () => _addExercise(weekIndex, dayIndex),
+                icon: const Icon(Icons.add),
+                label: const Text('Add exercise'),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
