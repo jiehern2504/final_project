@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../summary/summary_repository.dart';
 import 'widgets/activity_step.dart';
 import 'widgets/gender_step.dart';
 import 'widgets/intro_slide.dart';
@@ -68,6 +69,8 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
         },
         SetOptions(merge: true),
       );
+      // Seed the Home summary chart with the starting weight.
+      await SummaryRepository().logWeight(_weight.toDouble());
       // AuthPage watches this document and will route to HomePage now that the
       // stats are filled — no manual navigation needed here.
     } catch (_) {

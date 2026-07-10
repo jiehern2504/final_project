@@ -19,6 +19,7 @@ import '../workout/workout_plan_page.dart';
 import '../tutorial/muscle_tutorial_page.dart';
 import '../recommended/recommended_video.dart';
 import '../recommended/recommended_list_page.dart';
+import '../summary/summary_card.dart';
 import '../recommended/open_video.dart';
 import '../recommended/video_thumbnail.dart';
 
@@ -189,6 +190,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     onTapNoPlan: () => _openWorkoutPlan(context),
                     repository: _planRepository,
                   ),
+                  const SizedBox(height: 24),
+                  _SectionHeader(
+                    title: 'Your Summary',
+                    textColor: _kTextColor,
+                    accentColor: _kSecondaryColor,
+                  ),
+                  const SizedBox(height: 14),
+                  const SummaryCard(),
                 ],
               ),
             ),

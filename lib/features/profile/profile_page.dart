@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/profile_constants.dart';
+import '../summary/summary_repository.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -178,6 +179,8 @@ class _ProfilePageState extends State<ProfilePage> {
         // Reset the anchor for yearly age auto-increment (see AgeUpdater).
         'ageSetAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      // Log the weight so the Home summary chart has a data point.
+      await SummaryRepository().logWeight(weight);
       _showSuccess('Profile saved. The new changes will show on next login');
     } on FirebaseException catch (e) {
       _showError(e.message ?? 'Failed to save profile data.');

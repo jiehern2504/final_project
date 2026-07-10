@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../plan_generator.dart';
 import '../models/workout_plan_models.dart';
+import '../../summary/summary_repository.dart';
 
 class WorkoutPlanRepository {
   WorkoutPlanRepository({FirebaseFirestore? firestore})
@@ -264,6 +265,24 @@ class WorkoutPlanRepository {
       // looks markable before the server timestamp lands.
       'lastMarkedAt': Timestamp.fromDate(DateTime.now()),
     });
+
+    // Log the completed workout for the Home summary chart (skip rest days).
+    final PlanDay? marked = plan.dayByNumber(dayNumber);
+    if (marked != null && !marked.isRest && marked.exercises.isNotEmpty) {
+      int sets = 0;
+      for (final PlanExercise e in marked.exercises) {
+        sets += _firstIntOf(e.setsLabel, fallback: 3);
+      }
+      await SummaryRepository(firestore: _firestore)
+          .logWorkout(sets: sets, title: plan.title);
+    }
+  }
+
+  /// First integer found in [s] (the "3" in "3 sets × 12 reps"); [fallback]
+  /// when none is present.
+  int _firstIntOf(String s, {int fallback = 0}) {
+    final Match? m = RegExp(r'\d+').firstMatch(s);
+    return m == null ? fallback : int.parse(m.group(0)!);
   }
 
   /// Resets all completed days back to zero and reactivates the plan. Because
@@ -302,6 +321,8 @@ class WorkoutPlanRepository {
       <String, dynamic>{'weight': weight, 'height': height},
       SetOptions(merge: true),
     );
+    // Record the weight so the Home summary chart has a data point.
+    await SummaryRepository(firestore: _firestore).logWeight(weight);
   }
 
   /// Archives a plan (marks it 'completed') so it leaves the active slot and a
