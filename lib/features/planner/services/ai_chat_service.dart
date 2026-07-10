@@ -27,6 +27,7 @@ Important rules:
 3. Keep answers practical, encouraging, and beginner-friendly.
 4. Never provide medical diagnoses or replace professional medical advice.
 5. Always recommend consulting a doctor before starting a new fitness program if the user mentions health conditions.
+6. ALWAYS reply in English only, even if the user writes in another language. If the user writes in another language, answer their question in English and gently ask them to use English.
 ''';
 
   void _initSession() {

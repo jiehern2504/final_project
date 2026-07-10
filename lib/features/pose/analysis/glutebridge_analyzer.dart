@@ -96,7 +96,6 @@ PoseFeedback analyzeGluteBridge(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Place your feet flat — knees should be at about 90°.',
-      hintZh: '双脚平放地面，膝关节保持约90°弯曲。',
     );
   }
 
@@ -105,7 +104,6 @@ PoseFeedback analyzeGluteBridge(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Raise your hips higher — squeeze your glutes at the top.',
-      hintZh: '臀部再抬高一些，顶部时夹紧臀肌。',
     );
   }
 
@@ -113,6 +111,5 @@ PoseFeedback analyzeGluteBridge(Pose pose) {
     kind: PoseFeedbackKind.good,
     headlineEn: 'Good',
     hintEn: 'Hips are up — hold and squeeze for a second.',
-    hintZh: '臀部抬起到位，收紧并保持1秒。',
   );
 }

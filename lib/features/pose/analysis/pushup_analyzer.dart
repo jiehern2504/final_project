@@ -116,7 +116,6 @@ PoseFeedback analyzePushUp(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Lower your chest — bend your elbows a bit more.',
-      hintZh: '再下放一点，肘关节多弯曲一些。',
     );
   }
 
@@ -125,7 +124,6 @@ PoseFeedback analyzePushUp(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Keep shoulders, hips, and ankles in one straight line.',
-      hintZh: '保持肩、髋、踝在一条直线上。',
     );
   }
 
@@ -135,7 +133,6 @@ PoseFeedback analyzePushUp(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Turn sideways and keep your body line parallel to the floor.',
-      hintZh: '请侧身入镜，并让身体主线尽量与地面平行。',
     );
   }
 
@@ -143,6 +140,5 @@ PoseFeedback analyzePushUp(Pose pose) {
     kind: PoseFeedbackKind.good,
     headlineEn: 'Good',
     hintEn: 'Solid line — control the range of motion.',
-    hintZh: '身体成线，动作不错。',
   );
 }

@@ -254,7 +254,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         kind: PoseFeedbackKind.good,
         headlineEn: 'Holding',
         hintEn: 'Nice — keep your body in a straight line.',
-        hintZh: '保持中，身体成一条直线。',
       );
     }
 
@@ -272,7 +271,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         kind: PoseFeedbackKind.good,
         headlineEn: 'Good!',
         hintEn: 'Rep counted — keep going.',
-        hintZh: '计入一次，继续保持！',
       );
     }
 
@@ -284,7 +282,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       kind: PoseFeedbackKind.almost,
       headlineEn: 'Almost',
       hintEn: 'Good form — finish the full movement to count a rep.',
-      hintZh: '姿势不错，完成整个动作才会计入一次。',
     );
   }
 
@@ -573,11 +570,6 @@ class _FeedbackBanner extends StatelessWidget {
             Text(
               feedback.hintEn,
               style: const TextStyle(color: Colors.white, fontSize: 14),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              feedback.hintZh,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ],
         ),

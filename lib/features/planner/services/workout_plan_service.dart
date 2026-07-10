@@ -171,53 +171,31 @@ class WorkoutPlanService {
     final String t = prompt.toLowerCase();
 
     // Clearly longer than a month → cap at 4 weeks, flag as not recommended.
-    if (t.contains('year') ||
-        t.contains('年') ||
-        t.contains('半年') ||
-        t.contains('quarter')) {
+    if (t.contains('year') || t.contains('quarter')) {
       return (_kMaxWeeks, true);
     }
 
-    // "N month(s)" / "N 个月"
-    final RegExpMatch? mm =
-        RegExp(r'(\d+)\s*(?:months?|个月|月)').firstMatch(t);
+    // "N month(s)"
+    final RegExpMatch? mm = RegExp(r'(\d+)\s*months?').firstMatch(t);
     if (mm != null) {
       final int months = int.tryParse(mm.group(1) ?? '1') ?? 1;
       return (_kMaxWeeks, months >= 2);
     }
-    // "a month" / "one month" / "一个月" / "monthly"
+    // "a month" / "one month" / "monthly"
     if (t.contains('a month') ||
         t.contains('one month') ||
         t.contains('1 month') ||
         t.contains('this month') ||
-        t.contains('monthly') ||
-        t.contains('一个月') ||
-        t.contains('整个月')) {
+        t.contains('monthly')) {
       return (_kMaxWeeks, false);
     }
 
-    // "N week(s)" / "N 周" / "N 个星期"
-    final RegExpMatch? wm =
-        RegExp(r'(\d+)\s*(?:weeks?|周|个星期|星期)').firstMatch(t);
+    // "N week(s)"
+    final RegExpMatch? wm = RegExp(r'(\d+)\s*weeks?').firstMatch(t);
     if (wm != null) {
       final int n = int.tryParse(wm.group(1) ?? '1') ?? 1;
       if (n > _kMaxWeeks) return (_kMaxWeeks, true);
       return (n < 1 ? 1 : n, false);
-    }
-    // Chinese numeral weeks ("两周", "三个星期" …).
-    const Map<String, int> cn = <String, int>{
-      '一': 1,
-      '两': 2,
-      '二': 2,
-      '三': 3,
-      '四': 4,
-    };
-    for (final MapEntry<String, int> e in cn.entries) {
-      if (t.contains('${e.key}周') ||
-          t.contains('${e.key}个星期') ||
-          t.contains('${e.key}星期')) {
-        return (e.value, false);
-      }
     }
 
     return (1, false);

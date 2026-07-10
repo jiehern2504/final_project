@@ -124,9 +124,6 @@ PoseFeedback analyzePlank(Pose pose) {
       hintEn: hipsHigh
           ? 'Lower your hips — keep a straight line from shoulders to ankles.'
           : 'Lift your hips — don\'t let them sag toward the floor.',
-      hintZh: hipsHigh
-          ? '臀部下降，肩到脚踝保持一条直线。'
-          : '抬起臀部，不要塌腰。',
     );
   }
 
@@ -134,6 +131,5 @@ PoseFeedback analyzePlank(Pose pose) {
     kind: PoseFeedbackKind.good,
     headlineEn: 'Good',
     hintEn: 'Solid plank — breathe and hold.',
-    hintZh: '保持良好，正常呼吸，继续坚持。',
   );
 }

@@ -80,7 +80,6 @@ PoseFeedback analyzeCrunch(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Curl up more — lift your shoulders off the floor.',
-      hintZh: '再卷起一些，把肩膀抬离地面。',
     );
   }
 
@@ -89,7 +88,6 @@ PoseFeedback analyzeCrunch(Pose pose) {
       kind: PoseFeedbackKind.good,
       headlineEn: 'Good',
       hintEn: 'Good crunch — hold briefly then lower slowly.',
-      hintZh: '卷腹到位，稍作停顿后慢慢放下。',
     );
   }
 
@@ -97,6 +95,5 @@ PoseFeedback analyzeCrunch(Pose pose) {
     kind: PoseFeedbackKind.good,
     headlineEn: 'Good',
     hintEn: 'Nice form — keep your lower back pressed down.',
-    hintZh: '姿势良好，保持下背部贴地。',
   );
 }

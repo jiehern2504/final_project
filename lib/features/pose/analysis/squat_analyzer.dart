@@ -107,7 +107,6 @@ PoseFeedback analyzeSquat(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Squat a bit lower — bend your knees more.',
-      hintZh: '再蹲低一点，膝关节多弯曲一些。',
     );
   }
 
@@ -116,7 +115,6 @@ PoseFeedback analyzeSquat(Pose pose) {
       kind: PoseFeedbackKind.adjust,
       headlineEn: 'Adjust',
       hintEn: 'Keep your chest a little more upright.',
-      hintZh: '躯干略前倾过多，尽量保持上身更直立。',
     );
   }
 
@@ -125,7 +123,6 @@ PoseFeedback analyzeSquat(Pose pose) {
       kind: PoseFeedbackKind.good,
       headlineEn: 'Good',
       hintEn: 'Depth looks solid — stay controlled.',
-      hintZh: '深度不错，注意保持稳定。',
     );
   }
 
@@ -133,6 +130,5 @@ PoseFeedback analyzeSquat(Pose pose) {
     kind: PoseFeedbackKind.good,
     headlineEn: 'Good',
     hintEn: 'Nice squat position.',
-    hintZh: '姿势良好。',
   );
 }

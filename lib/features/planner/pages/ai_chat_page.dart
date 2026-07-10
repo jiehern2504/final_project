@@ -209,7 +209,6 @@ class _AiChatPageState extends State<AiChatPage> {
   /// Heuristic: does [text] look like a request to build a workout plan?
   bool _isPlanRequest(String text) {
     final String t = text.toLowerCase();
-    if (t.contains('计划') || t.contains('训练安排')) return true;
     const List<String> verbs = <String>[
       'make',
       'create',
@@ -493,7 +492,7 @@ class _InputBar extends StatelessWidget {
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => onSend(),
                   decoration: InputDecoration(
-                    hintText: 'Ask a fitness question…',
+                    hintText: 'Ask a fitness question… (English only)',
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
