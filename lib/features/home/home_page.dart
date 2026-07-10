@@ -13,6 +13,7 @@ import '../progress/progress_page.dart';
 import '../tdee/tdee_bmi_page.dart';
 import '../../core/notifications/notification_inbox_repository.dart';
 import '../../core/notifications/workout_reminder_service.dart';
+import '../../core/profile/age_updater.dart';
 import '../notifications/notifications_page.dart';
 import '../workout/workout_plan_page.dart';
 import '../tutorial/muscle_tutorial_page.dart';
@@ -88,6 +89,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WorkoutReminderService.instance
         .syncDeliveredNotifications()
         .catchError((_) {});
+    // Bump the user's age if a year has passed since it was last set.
+    AgeUpdater.maybeAdvance();
   }
 
   @override

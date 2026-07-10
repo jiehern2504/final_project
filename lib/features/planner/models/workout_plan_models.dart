@@ -143,6 +143,7 @@ class WorkoutPlan {
     this.weekNumber = 1,
     this.totalWeeks = 1,
     this.locked = false,
+    this.lastMarkedAt,
   });
 
   final String id;
@@ -167,6 +168,10 @@ class WorkoutPlan {
   /// A locked week is not yet available — it stays hidden until the previous
   /// week is completed and the user chooses to start it.
   final bool locked;
+
+  /// The last calendar day on which a day was marked complete. Used to enforce
+  /// "one day per day" — the user can't mark another day until the next day.
+  final DateTime? lastMarkedAt;
 
   /// True when this plan is one week of a multi-week series.
   bool get isSeries => totalWeeks > 1 && seriesId != null;
@@ -195,6 +200,7 @@ class WorkoutPlan {
       weekNumber: weekNumber,
       totalWeeks: totalWeeks,
       locked: locked ?? this.locked,
+      lastMarkedAt: lastMarkedAt,
     );
   }
 
@@ -215,6 +221,8 @@ class WorkoutPlan {
         'totalWeeks': totalWeeks,
         'locked': locked,
         if (seriesId != null) 'seriesId': seriesId,
+        if (lastMarkedAt != null)
+          'lastMarkedAt': Timestamp.fromDate(lastMarkedAt!),
         if (startedAt != null)
           'startedAt': Timestamp.fromDate(startedAt!),
         if (createdAt != null)
@@ -246,6 +254,7 @@ class WorkoutPlan {
       weekNumber: (data['weekNumber'] as num?)?.toInt() ?? 1,
       totalWeeks: (data['totalWeeks'] as num?)?.toInt() ?? 1,
       locked: data['locked'] as bool? ?? false,
+      lastMarkedAt: (data['lastMarkedAt'] as Timestamp?)?.toDate(),
     );
   }
 }

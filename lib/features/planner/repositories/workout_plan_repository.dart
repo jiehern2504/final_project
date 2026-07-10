@@ -258,6 +258,11 @@ class WorkoutPlanRepository {
         completedDays: completedDays,
         totalDays: totalDays,
       ).toMap(),
+      // Record when this happened so the UI can enforce "one day per day".
+      // Client time (not serverTimestamp) so the local write immediately
+      // reflects "marked today" — avoids a race where the next day briefly
+      // looks markable before the server timestamp lands.
+      'lastMarkedAt': Timestamp.fromDate(DateTime.now()),
     });
   }
 
@@ -281,7 +286,22 @@ class WorkoutPlanRepository {
         totalDays: resetDays.length,
       ).toMap(),
       'status': 'active',
+      // Clear the daily lock so the user can start marking again today.
+      'lastMarkedAt': FieldValue.delete(),
     });
+  }
+
+  /// Updates just the user's weight and height (kg / cm) on their profile.
+  Future<void> updateBodyMetrics({
+    required double weight,
+    required double height,
+  }) async {
+    final String? uid = _uid;
+    if (uid == null) return;
+    await _firestore.collection('users').doc(uid).set(
+      <String, dynamic>{'weight': weight, 'height': height},
+      SetOptions(merge: true),
+    );
   }
 
   /// Archives a plan (marks it 'completed') so it leaves the active slot and a

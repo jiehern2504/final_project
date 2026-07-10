@@ -63,6 +63,8 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
           'height': _height,
           'weight': _weight,
           'activityLevel': _activity,
+          // Anchor for yearly age auto-increment (see AgeUpdater).
+          'ageSetAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );

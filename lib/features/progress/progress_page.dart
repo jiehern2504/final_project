@@ -64,6 +64,9 @@ class _ProgressPageState extends State<ProgressPage> {
         if (plan.isSeries && plan.weekNumber < plan.totalWeeks) {
           await _showWeekCompletePrompt(plan);
         } else {
+          // Finishing the whole plan — nudge the user to update their stats.
+          await _promptUpdateBodyMetrics();
+          if (!mounted) return;
           await _showCompletionPrompt(plan);
         }
       }
@@ -114,6 +117,132 @@ class _ProgressPageState extends State<ProgressPage> {
     } else if (choice == 'new') {
       await _goToNewPlan(plan);
     }
+  }
+
+  /// The earliest day the user still has to complete (null when all done).
+  /// Marking is only allowed on this day, so days can't be done out of order.
+  int? _firstIncompleteDayNumber(WorkoutPlan plan) {
+    final List<PlanDay> days = <PlanDay>[...plan.days]
+      ..sort((PlanDay a, PlanDay b) => a.dayNumber.compareTo(b.dayNumber));
+    for (final PlanDay d in days) {
+      if (!d.completed) return d.dayNumber;
+    }
+    return null;
+  }
+
+  /// True when a day was already marked complete today (blocks a second one).
+  bool _isMarkedToday(WorkoutPlan plan) {
+    final DateTime? last = plan.lastMarkedAt;
+    if (last == null) return false;
+    final DateTime now = DateTime.now();
+    return last.year == now.year &&
+        last.month == now.month &&
+        last.day == now.day;
+  }
+
+  double? _asDouble(dynamic v) {
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v);
+    return null;
+  }
+
+  /// After finishing a plan, reminds the user to update their weight/height.
+  Future<void> _promptUpdateBodyMetrics() async {
+    Map<String, dynamic>? profile;
+    try {
+      profile = await _repository.fetchUserProfile();
+    } catch (_) {
+      profile = null;
+    }
+    if (!mounted) return;
+
+    final TextEditingController weightCtrl = TextEditingController(
+      text: _asDouble(profile?['weight'])?.toString() ?? '',
+    );
+    final TextEditingController heightCtrl = TextEditingController(
+      text: _asDouble(profile?['height'])?.toString() ?? '',
+    );
+
+    final bool? save = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Update your stats'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Nice work finishing your plan! Keep your weight and height up '
+              'to date for better recommendations.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: weightCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Weight (kg)',
+                prefixIcon: Icon(Icons.monitor_weight_outlined),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: heightCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Height (cm)',
+                prefixIcon: Icon(Icons.height),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Skip'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (save == true) {
+      final double? w = double.tryParse(weightCtrl.text.trim());
+      final double? h = double.tryParse(heightCtrl.text.trim());
+      if (w != null && h != null && w >= 25 && w <= 350 && h >= 80 && h <= 260) {
+        try {
+          await _repository.updateBodyMetrics(weight: w, height: h);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Stats updated.')),
+            );
+          }
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not update stats. Try again later.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Enter a valid weight (25–350 kg) and height (80–260 cm).',
+            ),
+          ),
+        );
+      }
+    }
+
+    weightCtrl.dispose();
+    heightCtrl.dispose();
   }
 
   /// Asks whether to start the next week after finishing a week in a series.
@@ -300,6 +429,32 @@ class _ProgressPageState extends State<ProgressPage> {
     );
   }
 
+  /// Builds the day cards, gating "Mark done" so days are completed strictly
+  /// in order and at most one per calendar day.
+  List<Widget> _dayCards(WorkoutPlan plan) {
+    final int? nextDay = _firstIncompleteDayNumber(plan);
+    final bool markedToday = _isMarkedToday(plan);
+    return plan.days.map((PlanDay day) {
+      final bool isNext = day.dayNumber == nextDay;
+      final bool canMark =
+          plan.isStarted && !day.completed && isNext && !markedToday;
+      String? lockHint;
+      if (plan.isStarted && !day.completed && !canMark) {
+        lockHint = (isNext && markedToday)
+            ? 'Come back tomorrow for your next day.'
+            : 'Finish the earlier days first.';
+      }
+      return _DayCard(
+        day: day,
+        planStarted: plan.isStarted,
+        isMarking: _markingDays.contains(day.dayNumber),
+        onMarkComplete: canMark ? () => _markDay(plan, day.dayNumber) : null,
+        lockHint: lockHint,
+        onExerciseTap: _openExercise,
+      );
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -395,17 +550,7 @@ class _ProgressPageState extends State<ProgressPage> {
                     label: const Text('Plan in progress'),
                   ),
                 const SizedBox(height: 20),
-                ...plan.days.map((PlanDay day) {
-                  return _DayCard(
-                    day: day,
-                    planStarted: plan.isStarted,
-                    isMarking: _markingDays.contains(day.dayNumber),
-                    onMarkComplete: plan.isStarted && !day.completed
-                        ? () => _markDay(plan, day.dayNumber)
-                        : null,
-                    onExerciseTap: _openExercise,
-                  );
-                }),
+                ..._dayCards(plan),
                 if (plan.isStarted) ...[
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
@@ -605,6 +750,7 @@ class _DayCard extends StatelessWidget {
     required this.planStarted,
     required this.isMarking,
     required this.onMarkComplete,
+    required this.lockHint,
     required this.onExerciseTap,
   });
 
@@ -612,6 +758,11 @@ class _DayCard extends StatelessWidget {
   final bool planStarted;
   final bool isMarking;
   final VoidCallback? onMarkComplete;
+
+  /// When the day can't be marked yet, why (e.g. out of order, or already did
+  /// one today). Null when the day is markable or already complete.
+  final String? lockHint;
+
   final void Function(String exerciseId) onExerciseTap;
 
   @override
@@ -650,9 +801,19 @@ class _DayCard extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('Mark done'),
-                  ),
+                  )
+                else if (planStarted && !day.completed && lockHint != null)
+                  const Icon(Icons.lock_outline, size: 18, color: Colors.grey),
               ],
             ),
+            if (planStarted && !day.completed && lockHint != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  lockHint!,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
             const SizedBox(height: 10),
             if (day.isRest)
               const Padding(
