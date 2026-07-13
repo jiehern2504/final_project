@@ -492,7 +492,7 @@ class _InputBar extends StatelessWidget {
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => onSend(),
                   decoration: InputDecoration(
-                    hintText: 'Ask a fitness question… (English only)',
+                    hintText: 'Ask a fitness question… ',
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
