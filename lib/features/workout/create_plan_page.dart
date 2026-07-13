@@ -8,6 +8,8 @@ import '../planner/repositories/workout_plan_repository.dart';
 import 'exercise_picker_sheet.dart';
 import 'workout_time_picker_sheet.dart';
 
+part 'widgets/stepper_row.dart';
+
 const Color _kPrimaryColor = Color(0xFF4CAF50);
 const Color _kBackgroundColor = Color(0xFFF9FBF9);
 const Color _kTextColor = Color(0xFF333333);
@@ -750,52 +752,3 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   }
 }
 
-/// A fixed-label number stepper (e.g. "Sets  [-] 3 [+]"). The label text is not
-/// editable — only the number changes.
-class _StepperRow extends StatelessWidget {
-  const _StepperRow({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final String label;
-  final int value;
-  final int min;
-  final int max;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
-        IconButton(
-          onPressed: value > min ? () => onChanged(value - 1) : null,
-          icon: const Icon(Icons.remove_circle_outline),
-          color: _kPrimaryColor,
-        ),
-        SizedBox(
-          width: 40,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-        ),
-        IconButton(
-          onPressed: value < max ? () => onChanged(value + 1) : null,
-          icon: const Icon(Icons.add_circle_outline),
-          color: _kPrimaryColor,
-        ),
-      ],
-    );
-  }
-}
