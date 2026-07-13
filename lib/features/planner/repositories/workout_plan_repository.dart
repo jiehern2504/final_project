@@ -239,6 +239,12 @@ class WorkoutPlanRepository {
     if (!doc.exists) return;
 
     final WorkoutPlan plan = WorkoutPlan.fromFirestore(doc);
+
+    // Guard: if this day doesn't exist or is already done, do nothing — avoids
+    // double-logging the workout and re-arming the daily lock on a repeat call.
+    final PlanDay? target = plan.dayByNumber(dayNumber);
+    if (target == null || target.completed) return;
+
     final List<PlanDay> updatedDays = plan.days.map((PlanDay day) {
       if (day.dayNumber == dayNumber) {
         return day.copyWith(completed: true);

@@ -53,14 +53,13 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            // R8 is active in release; apply our keep rules so Gson-based
-            // scheduled notifications don't crash (see proguard-rules.pro).
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            // Disable R8 code/resource shrinking in release. Shrinking stripped
+            // the Gson generic signatures flutter_local_notifications needs
+            // (release-only crash) and risks other reflection-based plugins
+            // (ML Kit, Firebase, camera). Off = release behaves like debug =
+            // reliable. (proguard-rules.pro is kept for reference if re-enabled.)
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

@@ -63,13 +63,32 @@ class SummaryRepository {
   }
 
   /// Records a weight reading (client time so the point shows immediately).
+  ///
+  /// Keeps at most ONE reading per calendar day: if a reading already exists
+  /// today it is updated instead of adding a duplicate, so the chart isn't
+  /// cluttered with several points stacked on the same day.
   Future<void> logWeight(double kg) async {
     final String? uid = _uid;
     if (uid == null) return;
-    await _weightCol(uid).add(<String, dynamic>{
-      'at': Timestamp.fromDate(DateTime.now()),
+    final DateTime now = DateTime.now();
+    final DateTime dayStart = DateTime(now.year, now.month, now.day);
+    final DateTime dayEnd = dayStart.add(const Duration(days: 1));
+
+    final QuerySnapshot<Map<String, dynamic>> today = await _weightCol(uid)
+        .where('at', isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+        .where('at', isLessThan: Timestamp.fromDate(dayEnd))
+        .limit(1)
+        .get();
+
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'at': Timestamp.fromDate(now),
       'kg': kg,
-    });
+    };
+    if (today.docs.isNotEmpty) {
+      await today.docs.first.reference.update(payload);
+    } else {
+      await _weightCol(uid).add(payload);
+    }
   }
 
   /// Records one completed workout day.

@@ -80,6 +80,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     CameraController? controller;
     try {
       final List<CameraDescription> cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        throw StateError('No camera found on this device.');
+      }
       final CameraDescription camera = cameras.firstWhere(
             (CameraDescription c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,

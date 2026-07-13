@@ -376,8 +376,8 @@ class _ProgressPageState extends State<ProgressPage> {
         title: const Text('Reset progress?'),
         content: const Text(
           'This sets every completed day back to 0 for this plan.\n\n'
-          'Your achievements and badges are based on completed days, so they '
-          'will be reset too. This cannot be undone.',
+          'Your lifetime achievements and summary history are kept — only '
+          'this plan\'s day check-offs are cleared. This cannot be undone.',
         ),
         actions: [
           TextButton(
