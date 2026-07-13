@@ -336,6 +336,34 @@ class WorkoutPlanRepository {
     await _plans.doc(planId).delete();
   }
 
+  /// True if the user has ever finished a full 4-week (one-month) plan series:
+  /// a series with 4 weeks where every week's days are all completed.
+  Future<bool> hasCompletedFourWeekPlan() async {
+    final String? uid = _uid;
+    if (uid == null) return false;
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _plans.where('userId', isEqualTo: uid).get();
+    final List<WorkoutPlan> plans =
+        snapshot.docs.map(WorkoutPlan.fromFirestore).toList();
+
+    final Map<String, List<WorkoutPlan>> bySeries =
+        <String, List<WorkoutPlan>>{};
+    for (final WorkoutPlan p in plans) {
+      if (p.seriesId == null || p.totalWeeks < 4) continue;
+      bySeries.putIfAbsent(p.seriesId!, () => <WorkoutPlan>[]).add(p);
+    }
+
+    for (final List<WorkoutPlan> weeks in bySeries.values) {
+      final int total = weeks.first.totalWeeks;
+      if (weeks.length < total) continue; // not all weeks present
+      final bool allDone = weeks.every((WorkoutPlan p) =>
+          p.progress.totalDays > 0 &&
+          p.progress.completedDays >= p.progress.totalDays);
+      if (allDone) return true;
+    }
+    return false;
+  }
+
   Future<Map<String, dynamic>?> fetchUserProfile() async {
     final String? uid = _uid;
     if (uid == null) return null;

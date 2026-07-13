@@ -796,7 +796,7 @@ class _HomeBottomBar extends StatelessWidget {
           Expanded(
             child: _BottomNavItem(
               icon: Icons.emoji_events_outlined,
-              label: 'Achievement',
+              label: 'Awards',
               color: _withOpacity(textColor, 0.7),
               onTap: () {
                 Navigator.of(context).push<void>(
@@ -903,6 +903,9 @@ class _BottomNavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: color,
                     fontWeight: FontWeight.w600,
