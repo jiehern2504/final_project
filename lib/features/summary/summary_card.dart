@@ -4,10 +4,11 @@ import 'summary_detail_page.dart';
 import 'summary_models.dart';
 import 'summary_chart.dart';
 import 'summary_repository.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimary = Color(0xFF4CAF50);
-const Color _kText = Color(0xFF333333);
-const Color _kMuted = Color(0xFF7A8A80);
+const Color _kPrimary = AppColors.primary;
+const Color _kText = AppColors.text;
+const Color _kMuted = AppColors.muted;
 
 /// The "Your progress" summary card shown at the bottom of the Home page.
 /// Shows the current month's weight + workouts; tapping opens the detail view.
@@ -170,7 +171,7 @@ class _CardShell extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE6EFE8)),
+            border: Border.all(color: AppColors.hairline),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),

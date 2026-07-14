@@ -8,4 +8,10 @@ abstract final class AppColors {
   static const Color card = Colors.white;
   static const Color text = Color(0xFF333333);
   static const Color textSecondary = Color(0xFF757575);
+
+  /// Muted grey-green used for captions / secondary labels on light cards.
+  static const Color muted = Color(0xFF7A8A80);
+
+  /// Hairline border colour for cards and dividers.
+  static const Color hairline = Color(0xFFE6EFE8);
 }

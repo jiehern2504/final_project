@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
+const Color _kPrimaryColor = AppColors.primary;
 
 class WorkoutTimePickerResult {
   const WorkoutTimePickerResult({

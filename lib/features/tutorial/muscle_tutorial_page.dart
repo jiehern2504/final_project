@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'body_map.dart';
 import 'muscle_exercises_page.dart';
 import 'muscle_models.dart';
+import '../../core/theme/app_colors.dart';
 
 class MuscleTutorialPage extends StatefulWidget {
   const MuscleTutorialPage({super.key});
 
-  static const Color primaryColor = Color(0xFF4CAF50);
+  static const Color primaryColor = AppColors.primary;
 
   @override
   State<MuscleTutorialPage> createState() => _MuscleTutorialPageState();
@@ -30,7 +31,7 @@ class _MuscleTutorialPageState extends State<MuscleTutorialPage> {
     final bool hasSelection = _selected != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FBF9),
+      backgroundColor: AppColors.background,
            appBar: AppBar(
         title: const Text("Muscle Tutorial"),
         centerTitle: true,

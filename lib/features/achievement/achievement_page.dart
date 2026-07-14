@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../planner/repositories/workout_plan_repository.dart';
 import '../summary/summary_repository.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
-const Color _kSecondaryColor = Color(0xFFFFB74D);
+const Color _kPrimaryColor = AppColors.primary;
+const Color _kSecondaryColor = AppColors.secondary;
 
 /// Aggregated achievement inputs: lifetime completed workout days (never resets,
 /// even across weeks/plans) + whether a full 4-week plan was ever finished.
@@ -46,7 +47,7 @@ class _AchievementPageState extends State<AchievementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FBF9),
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Achievements'), centerTitle: true),
       body: SafeArea(
         child: FutureBuilder<_AchievementData>(

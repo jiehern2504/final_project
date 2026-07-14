@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'summary_chart.dart';
 import 'summary_models.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimary = Color(0xFF4CAF50);
-const Color _kBg = Color(0xFFF9FBF9);
-const Color _kText = Color(0xFF333333);
-const Color _kMuted = Color(0xFF7A8A80);
+const Color _kPrimary = AppColors.primary;
+const Color _kBg = AppColors.background;
+const Color _kText = AppColors.text;
+const Color _kMuted = AppColors.muted;
 const Color _kChip = Color(0xFFEEF5F0);
 
 enum _Level { month, year }
@@ -214,7 +215,7 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE6EFE8)),
+            border: Border.all(color: AppColors.hairline),
             borderRadius: BorderRadius.circular(9),
           ),
           child: Icon(icon, size: 18, color: _kText),
@@ -236,7 +237,7 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE6EFE8)),
+        side: const BorderSide(color: AppColors.hairline),
       ),
       color: Colors.white,
       child: Padding(
@@ -390,7 +391,7 @@ class _RowLine extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE6EFE8))),
+        border: Border(bottom: BorderSide(color: AppColors.hairline)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

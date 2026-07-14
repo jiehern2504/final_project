@@ -8,6 +8,7 @@ import '../services/workout_plan_service.dart';
 import '../services/fake_plan_ai.dart';
 import '../widgets/chat_bubble.dart';
 import '../../progress/progress_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// AI Fitness Chat Page.
 ///
@@ -62,8 +63,8 @@ class _AiChatPageState extends State<AiChatPage> {
   int? _adoptingIndex;
 
   // ── Colour constants (aligned with AppColors) ──────────────────────────────
-  static const Color _kPrimary = Color(0xFF4CAF50);
-  static const Color _kBackground = Color(0xFFF9FBF9);
+  static const Color _kPrimary = AppColors.primary;
+  static const Color _kBackground = AppColors.background;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -443,8 +444,8 @@ class _SuggestionChips extends StatelessWidget {
             ),
             onPressed: () => onTap(suggestion),
             backgroundColor: Colors.white,
-            side: const BorderSide(color: Color(0xFF4CAF50)),
-            labelStyle: const TextStyle(color: Color(0xFF4CAF50)),
+            side: const BorderSide(color: AppColors.primary),
+            labelStyle: const TextStyle(color: AppColors.primary),
           );
         },
       ),
@@ -468,7 +469,7 @@ class _InputBar extends StatelessWidget {
   final bool isSending;
   final VoidCallback onSend;
 
-  static const Color _kPrimary = Color(0xFF4CAF50);
+  static const Color _kPrimary = AppColors.primary;
 
   @override
   Widget build(BuildContext context) {

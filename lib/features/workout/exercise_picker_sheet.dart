@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../planner/models/workout_plan_models.dart';
 import '../tutorial/exercise_catalog.dart';
 import '../tutorial/muscle_models.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
+const Color _kPrimaryColor = AppColors.primary;
 
 Future<PlanExercise?> showExercisePickerSheet(BuildContext context) {
   return showModalBottomSheet<PlanExercise>(

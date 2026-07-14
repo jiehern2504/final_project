@@ -7,12 +7,13 @@ import '../planner/models/workout_plan_models.dart';
 import '../planner/repositories/workout_plan_repository.dart';
 import 'exercise_picker_sheet.dart';
 import 'workout_time_picker_sheet.dart';
+import '../../core/theme/app_colors.dart';
 
 part 'widgets/stepper_row.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
-const Color _kBackgroundColor = Color(0xFFF9FBF9);
-const Color _kTextColor = Color(0xFF333333);
+const Color _kPrimaryColor = AppColors.primary;
+const Color _kBackgroundColor = AppColors.background;
+const Color _kTextColor = AppColors.text;
 
 enum _CreateStep { gate, builder, workoutTime }
 

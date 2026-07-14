@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../onboarding/widgets/bear_mascot.dart';
 import 'signup_page.dart';
+import '../../core/theme/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -166,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                                   .textTheme
                                   .bodyMedium
                                   ?.copyWith(
-                                    color: const Color(0xFF4CAF50),
+                                    color: AppColors.primary,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),

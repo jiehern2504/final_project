@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'summary_models.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Which single series a [SummaryChart] draws.
 enum SummaryMetric { weight, workouts }
@@ -29,7 +30,7 @@ class SummaryChart extends StatelessWidget {
   final String? xAxisLabel;
 
   static const Color weightColor = Color(0xFF2AA6A6);
-  static const Color workoutColor = Color(0xFF4CAF50);
+  static const Color workoutColor = AppColors.primary;
 
   Color get _color =>
       metric == SummaryMetric.weight ? weightColor : workoutColor;
@@ -77,7 +78,7 @@ class _SummaryPainter extends CustomPainter {
   final Color color;
   final String? xLabel;
 
-  static const Color _muted = Color(0xFF7A8A80);
+  static const Color _muted = AppColors.muted;
   static const Color _grid = Color(0x14333333);
   static const Color _cardFill = Colors.white;
 

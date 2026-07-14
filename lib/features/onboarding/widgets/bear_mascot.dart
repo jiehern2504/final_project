@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// The little gym-bear mascot, drawn with a [CustomPainter] so it needs no
 /// image asset.
@@ -24,9 +25,9 @@ class BearMascot extends StatelessWidget {
 
 class _BearPainter extends CustomPainter {
   static const Color _white = Colors.white;
-  static const Color _orange = Color(0xFFFFB74D);
+  static const Color _orange = AppColors.secondary;
   static const Color _coral = Color(0xFFF0897A);
-  static const Color _dark = Color(0xFF333333);
+  static const Color _dark = AppColors.text;
 
   @override
   void paint(Canvas canvas, Size size) {

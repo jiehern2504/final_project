@@ -22,6 +22,7 @@ import '../recommended/recommended_list_page.dart';
 import '../summary/summary_card.dart';
 import '../recommended/open_video.dart';
 import '../recommended/video_thumbnail.dart';
+import '../../core/theme/app_colors.dart';
 
 part 'widgets/home_greeting.dart';
 part 'widgets/home_shortcuts.dart';
@@ -30,11 +31,11 @@ part 'widgets/home_recommendations.dart';
 part 'widgets/home_progress_card.dart';
 part 'widgets/home_bottom_bar.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
-const Color _kSecondaryColor = Color(0xFFFFB74D);
-const Color _kBackgroundColor = Color(0xFFF9FBF9);
+const Color _kPrimaryColor = AppColors.primary;
+const Color _kSecondaryColor = AppColors.secondary;
+const Color _kBackgroundColor = AppColors.background;
 const Color _kCardColor = Colors.white;
-const Color _kTextColor = Color(0xFF333333);
+const Color _kTextColor = AppColors.text;
 
 Color _withOpacity(Color color, double opacity) {
   final int a = (opacity * 255).round().clamp(0, 255);

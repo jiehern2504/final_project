@@ -17,16 +17,17 @@ import '../progress/progress_page.dart';
 import 'create_plan_page.dart';
 
 import 'workout_time_picker_sheet.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
+const Color _kPrimaryColor = AppColors.primary;
 
-const Color _kSecondaryColor = Color(0xFFFFB74D);
+const Color _kSecondaryColor = AppColors.secondary;
 
-const Color _kBackgroundColor = Color(0xFFF9FBF9);
+const Color _kBackgroundColor = AppColors.background;
 
 const Color _kCardColor = Colors.white;
 
-const Color _kTextColor = Color(0xFF333333);
+const Color _kTextColor = AppColors.text;
 
 Color _withOpacity(Color color, double opacity) {
   final int a = (opacity * 255).round().clamp(0, 255);

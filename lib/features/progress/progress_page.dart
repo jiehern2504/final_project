@@ -6,8 +6,9 @@ import '../workout/create_plan_page.dart';
 import '../workout/workout_plan_page.dart';
 import '../tutorial/exercise_catalog.dart';
 import '../tutorial/exercise_detail_page.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kPrimaryColor = Color(0xFF4CAF50);
+const Color _kPrimaryColor = AppColors.primary;
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key, this.repository});
@@ -458,7 +459,7 @@ class _ProgressPageState extends State<ProgressPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FBF9),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Your Progress'),
         centerTitle: true,

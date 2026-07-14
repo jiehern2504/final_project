@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/chat_message.dart';
 import '../models/workout_plan_models.dart';
 import 'typing_indicator.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// A single chat bubble that renders one [ChatMessage].
 ///
@@ -32,10 +33,10 @@ class ChatBubble extends StatelessWidget {
   final bool adopting;
 
   // ── Colour constants (aligned with AppColors / home_page palette) ─────────
-  static const Color _kPrimary = Color(0xFF4CAF50);
+  static const Color _kPrimary = AppColors.primary;
   static const Color _kUserText = Colors.white;
   static const Color _kAiBubble = Color(0xFFEEEEEE);
-  static const Color _kAiText = Color(0xFF333333);
+  static const Color _kAiText = AppColors.text;
   static const Color _kErrorBubble = Color(0xFFFFEBEE);
   static const Color _kErrorText = Color(0xFFC62828);
 
@@ -138,8 +139,8 @@ class _PlanMessage extends StatelessWidget {
     required this.onAdopt,
   });
 
-  static const Color _kPrimary = Color(0xFF4CAF50);
-  static const Color _kText = Color(0xFF333333);
+  static const Color _kPrimary = AppColors.primary;
+  static const Color _kText = AppColors.text;
 
   final WorkoutPlan plan;
   final bool adopted;
@@ -243,8 +244,8 @@ class _PlanMessage extends StatelessWidget {
 class _DayBlock extends StatelessWidget {
   const _DayBlock({required this.day});
 
-  static const Color _kPrimary = Color(0xFF4CAF50);
-  static const Color _kText = Color(0xFF333333);
+  static const Color _kPrimary = AppColors.primary;
+  static const Color _kText = AppColors.text;
 
   final PlanDay day;
 

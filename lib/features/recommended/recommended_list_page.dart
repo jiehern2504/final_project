@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'open_video.dart';
 import 'recommended_video.dart';
 import 'video_thumbnail.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _kText = Color(0xFF333333);
+const Color _kText = AppColors.text;
 
 /// Full "See all" list of recommended workout videos.
 class RecommendedListPage extends StatelessWidget {
@@ -13,7 +14,7 @@ class RecommendedListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FBF9),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Recommended Workouts'),
         centerTitle: true,

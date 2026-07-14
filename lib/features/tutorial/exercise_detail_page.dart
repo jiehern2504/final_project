@@ -4,6 +4,7 @@ import '../pose/pose_camera_page.dart';
 import '../pose/pose_exercise_type.dart';
 import 'exercise_catalog.dart';
 import 'exercise_video_player.dart';
+import '../../core/theme/app_colors.dart';
 
 class ExerciseDetailPage extends StatefulWidget {
   const ExerciseDetailPage({
@@ -30,7 +31,7 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
     final hasCta = exercise.poseDetectType != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FBF9),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(exercise.title),
         centerTitle: true,
@@ -185,7 +186,7 @@ class _AiDetectCta extends StatelessWidget {
 
   final PoseExerciseType poseType;
 
-  static const Color _accentGreen = Color(0xFF4CAF50);
+  static const Color _accentGreen = AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
