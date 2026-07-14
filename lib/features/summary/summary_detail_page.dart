@@ -251,7 +251,8 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
                 points: points,
                 metric: metric,
                 showAxes: true,
-                height: 180,
+                height: 190,
+                xAxisLabel: _level == _Level.year ? 'Month' : 'Day',
                 onPointTap: _level == _Level.year
                     ? (int i) => _drillToMonth(points, i)
                     : null,

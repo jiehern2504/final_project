@@ -15,6 +15,7 @@ class SummaryChart extends StatelessWidget {
     this.showAxes = true,
     this.height = 160,
     this.onPointTap,
+    this.xAxisLabel,
   });
 
   final List<ChartPoint> points;
@@ -22,6 +23,10 @@ class SummaryChart extends StatelessWidget {
   final bool showAxes;
   final double height;
   final void Function(int index)? onPointTap;
+
+  /// Optional caption under the x-axis (e.g. "Day" or "Month"). Shown only when
+  /// [showAxes] is true.
+  final String? xAxisLabel;
 
   static const Color weightColor = Color(0xFF2AA6A6);
   static const Color workoutColor = Color(0xFF4CAF50);
@@ -39,6 +44,7 @@ class SummaryChart extends StatelessWidget {
           metric: metric,
           showAxes: showAxes,
           color: _color,
+          xLabel: xAxisLabel,
         );
         final Widget chart = CustomPaint(size: Size(w, height), painter: painter);
         if (onPointTap == null) {
@@ -62,12 +68,14 @@ class _SummaryPainter extends CustomPainter {
     required this.metric,
     required this.showAxes,
     required this.color,
+    this.xLabel,
   });
 
   final List<ChartPoint> points;
   final SummaryMetric metric;
   final bool showAxes;
   final Color color;
+  final String? xLabel;
 
   static const Color _muted = Color(0xFF7A8A80);
   static const Color _grid = Color(0x14333333);
@@ -76,7 +84,7 @@ class _SummaryPainter extends CustomPainter {
   double get _padL => showAxes ? 32 : 8;
   double get _padR => showAxes ? 12 : 8;
   double get _padT => 12;
-  double get _padB => showAxes ? 22 : 10;
+  double get _padB => showAxes ? (xLabel != null ? 36 : 22) : 10;
 
   /// The value for this metric at [p]; null only for missing weight readings.
   double? _value(ChartPoint p) =>
@@ -135,7 +143,7 @@ class _SummaryPainter extends CustomPainter {
       }
     }
 
-    // X-axis labels.
+    // X-axis tick labels.
     if (showAxes) {
       final int step = (points.length / 7).ceil().clamp(1, 999);
       for (int i = 0; i < points.length; i++) {
@@ -145,6 +153,12 @@ class _SummaryPainter extends CustomPainter {
               anchorTop: true, center: true);
         }
       }
+    }
+
+    // X-axis title (e.g. "Day" / "Month").
+    if (showAxes && xLabel != null) {
+      _text(canvas, xLabel!, Offset(_padL + plotW / 2, size.height - 14),
+          anchorTop: true, center: true, bold: true);
     }
 
     // Line — weight can have gaps (missing readings) → draw in segments.
@@ -198,11 +212,16 @@ class _SummaryPainter extends CustomPainter {
     bool anchorRight = false,
     bool anchorTop = false,
     bool center = false,
+    bool bold = false,
   }) {
     final TextPainter tp = TextPainter(
       text: TextSpan(
         text: s,
-        style: const TextStyle(color: _muted, fontSize: 10),
+        style: TextStyle(
+          color: bold ? const Color(0xFF556B60) : _muted,
+          fontSize: bold ? 11 : 10,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -234,5 +253,6 @@ class _SummaryPainter extends CustomPainter {
   bool shouldRepaint(covariant _SummaryPainter old) =>
       old.points != points ||
       old.showAxes != showAxes ||
-      old.metric != metric;
+      old.metric != metric ||
+      old.xLabel != xLabel;
 }
