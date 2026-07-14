@@ -109,30 +109,6 @@ class _NotificationsPageState extends State<NotificationsPage>
     );
   }
 
-  Future<void> _triggerTestNotification() async {
-    if (!_permissionGranted) {
-      final bool granted = await _reminderService.ensureReminderPermissions();
-      if (!granted && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Notifications and exact alarms are required for the test.',
-            ),
-          ),
-        );
-        return;
-      }
-    }
-    await _reminderService.triggerTestNotification();
-    await _refreshTopState();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Test notification scheduled in ~2 minutes.'),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,7 +150,6 @@ class _NotificationsPageState extends State<NotificationsPage>
                     onRequestPermission: _requestPermission,
                     onOpenSettings: _openSettings,
                     onOpenWorkoutPlan: _openWorkoutPlan,
-                    onTriggerTest: _triggerTestNotification,
                     onRefresh: _refreshTopState,
                   );
                 },
@@ -228,7 +203,6 @@ class _PermissionCard extends StatelessWidget {
     required this.onRequestPermission,
     required this.onOpenSettings,
     required this.onOpenWorkoutPlan,
-    required this.onTriggerTest,
     required this.onRefresh,
   });
 
@@ -239,7 +213,6 @@ class _PermissionCard extends StatelessWidget {
   final Future<void> Function() onRequestPermission;
   final Future<void> Function() onOpenSettings;
   final VoidCallback onOpenWorkoutPlan;
-  final Future<void> Function() onTriggerTest;
   final Future<void> Function() onRefresh;
 
   @override
@@ -351,14 +324,6 @@ class _PermissionCard extends StatelessWidget {
                   side: const BorderSide(color: AppColors.secondary),
                 ),
                 child: const Text('App settings'),
-              ),
-              OutlinedButton(
-                onPressed: onTriggerTest,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.text,
-                  side: const BorderSide(color: AppColors.textSecondary),
-                ),
-                child: const Text('Trigger test (~2 min)'),
               ),
               TextButton(
                 onPressed: onOpenWorkoutPlan,
