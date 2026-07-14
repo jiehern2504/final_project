@@ -92,11 +92,23 @@ class _SummaryCardState extends State<SummaryCard> {
             const Icon(Icons.chevron_right, color: _kMuted),
           ],
         ),
+        const SizedBox(height: 12),
+        _MiniChart(
+          label: 'Weight (kg)',
+          color: SummaryChart.weightColor,
+          points: points,
+          metric: SummaryMetric.weight,
+          emptyText: 'No weight logged yet',
+        ),
+        const SizedBox(height: 14),
+        _MiniChart(
+          label: 'Workouts done',
+          color: SummaryChart.workoutColor,
+          points: points,
+          metric: SummaryMetric.workouts,
+          emptyText: 'No workouts yet',
+        ),
         const SizedBox(height: 8),
-        const _Legend(),
-        const SizedBox(height: 4),
-        SummaryChart(points: points, showAxes: false, height: 128),
-        const SizedBox(height: 6),
         const Center(
           child: Text(
             'Tap to see details ›',
@@ -175,39 +187,61 @@ class _CardShell extends StatelessWidget {
   }
 }
 
-class _Legend extends StatelessWidget {
-  const _Legend();
+/// A labelled single-metric mini chart used on the Home card.
+class _MiniChart extends StatelessWidget {
+  const _MiniChart({
+    required this.label,
+    required this.color,
+    required this.points,
+    required this.metric,
+    required this.emptyText,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        _LegendKey(color: SummaryChart.weightColor, label: 'Weight (kg)'),
-        SizedBox(width: 16),
-        _LegendKey(color: SummaryChart.workoutColor, label: 'Workouts done'),
-      ],
-    );
-  }
-}
-
-class _LegendKey extends StatelessWidget {
-  const _LegendKey({required this.color, required this.label});
-
-  final Color color;
   final String label;
+  final Color color;
+  final List<ChartPoint> points;
+  final SummaryMetric metric;
+  final String emptyText;
+
+  bool get _hasData => metric == SummaryMetric.weight
+      ? points.any((ChartPoint p) => p.weight != null)
+      : points.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, color: _kText)),
+          ],
         ),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: _kMuted)),
+        const SizedBox(height: 2),
+        if (_hasData)
+          SummaryChart(
+            points: points,
+            metric: metric,
+            showAxes: false,
+            height: 92,
+          )
+        else
+          SizedBox(
+            height: 92,
+            child: Center(
+              child: Text(emptyText,
+                  style: const TextStyle(fontSize: 12, color: _kMuted)),
+            ),
+          ),
       ],
     );
   }

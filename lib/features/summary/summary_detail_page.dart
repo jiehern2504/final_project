@@ -90,45 +90,25 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
             _rangeToggle(),
             const SizedBox(height: 14),
             _navRow(),
-            const SizedBox(height: 6),
-            _legend(),
-            const SizedBox(height: 4),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFFE6EFE8)),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(6, 12, 6, 6),
-                child: points.isEmpty
-                    ? const SizedBox(
-                        height: 180,
-                        child: Center(
-                          child: Text('No data for this period.',
-                              style: TextStyle(color: _kMuted)),
-                        ),
-                      )
-                    : SummaryChart(
-                        points: points,
-                        showAxes: true,
-                        height: 210,
-                        onPointTap: _level == _Level.year
-                            ? (int i) => _drillToMonth(points, i)
-                            : null,
-                      ),
-              ),
+            const SizedBox(height: 10),
+            _chartCard(
+              'Weight (kg)',
+              SummaryChart.weightColor,
+              SummaryMetric.weight,
+              points,
             ),
-            if (points.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _chartCard(
+              'Workouts done',
+              SummaryChart.workoutColor,
+              SummaryMetric.workouts,
+              points,
+            ),
+            if (points.isNotEmpty && _level == _Level.year) ...[
               const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  _level == _Level.year
-                      ? 'Tap a month to open it'
-                      : 'Monthly view',
-                  style: const TextStyle(fontSize: 11, color: _kMuted),
-                ),
+              const Center(
+                child: Text('Tap a month to open it',
+                    style: TextStyle(fontSize: 11, color: _kMuted)),
               ),
             ],
             const SizedBox(height: 16),
@@ -243,13 +223,50 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
     );
   }
 
-  Widget _legend() {
-    return Row(
-      children: const [
-        _Key(color: SummaryChart.weightColor, label: 'Weight (kg)'),
-        SizedBox(width: 16),
-        _Key(color: SummaryChart.workoutColor, label: 'Workouts done'),
-      ],
+  Widget _chartCard(
+    String label,
+    Color color,
+    SummaryMetric metric,
+    List<ChartPoint> points,
+  ) {
+    final bool hasData = metric == SummaryMetric.weight
+        ? points.any((ChartPoint p) => p.weight != null)
+        : points.isNotEmpty;
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE6EFE8)),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Key(color: color, label: label),
+            const SizedBox(height: 8),
+            if (hasData)
+              SummaryChart(
+                points: points,
+                metric: metric,
+                showAxes: true,
+                height: 180,
+                onPointTap: _level == _Level.year
+                    ? (int i) => _drillToMonth(points, i)
+                    : null,
+              )
+            else
+              const SizedBox(
+                height: 150,
+                child: Center(
+                  child: Text('No weight logged for this period.',
+                      style: TextStyle(color: _kMuted)),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
