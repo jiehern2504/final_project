@@ -10,20 +10,18 @@ import 'pose_exercise_type.dart';
 class PoseExercisePickerPage extends StatelessWidget {
   const PoseExercisePickerPage({super.key});
 
-  // ── Accent colours (one per exercise) ─────────────────────────────────────
-  static const Color _squatColor       = Color(0xFFDF5089);
-  static const Color _pushUpColor      = Color(0xFF005F9C);
-  static const Color _gluteBridgeColor = Color(0xFFC0622C);
-  static const Color _plankColor       = Color(0xFF1A7A5E);
-  static const Color _crunchColor      = Color(0xFF9C6B00);
+  // ── Accent colours (one per exercise) — alternating green / orange to match
+  //    the app's green+amber brand, kept deep enough to read with white text.
+  static const Color _squatColor = Color(0xFF43A047); // green
+  static const Color _pushUpColor = Color(0xFFFB8C00); // orange
+  static const Color _gluteBridgeColor = Color(0xFF2E7D32); // deep green
+  static const Color _plankColor = Color(0xFFF57C00); // amber-orange
+  static const Color _crunchColor = Color(0xFF558B2F); // olive green
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Pose Detection'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('AI Pose Detection'), centerTitle: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -43,8 +41,11 @@ class PoseExercisePickerPage extends StatelessWidget {
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Icon(Icons.warning_amber_rounded,
-                      color: Color(0xFFE59400), size: 22),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Color(0xFFE59400),
+                    size: 22,
+                  ),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -64,10 +65,10 @@ class PoseExercisePickerPage extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'On-device pose estimation with live feedback, '
-                  'skeleton overlay and rep / hold counts.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-              ),
+              'skeleton overlay and rep / hold counts.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 20),
 
@@ -97,7 +98,10 @@ class PoseExercisePickerPage extends StatelessWidget {
               title: 'Glute Bridge',
               subtitle: 'Hip height · knee angle · reps',
               color: _gluteBridgeColor,
-              icon: Image.asset('assets/glute-bridge-exercise.gif', fit: BoxFit.cover),
+              icon: Image.asset(
+                'assets/glute-bridge-exercise.gif',
+                fit: BoxFit.cover,
+              ),
               onTap: () => _open(context, PoseExerciseType.gluteBridge),
             ),
             const SizedBox(height: 14),
@@ -117,7 +121,7 @@ class PoseExercisePickerPage extends StatelessWidget {
               title: 'Crunch',
               subtitle: 'Shoulder curl · hip angle · reps',
               color: _crunchColor,
-                icon: Image.asset('assets/crunch.gif', fit: BoxFit.cover),
+              icon: Image.asset('assets/crunch.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.crunch),
             ),
           ],
@@ -154,53 +158,63 @@ class _ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color darker = Color.lerp(color, Colors.black, 0.22)!;
     return Material(
-      color: color,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          height: 132,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: <Widget>[
-                // Left — text
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: <Color>[color, darker],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 132,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: <Widget>[
+                  // Left — text
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 14,
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                // Right — GIF or placeholder
-                SizedBox(
-                  width: 94,
-                  height: 74,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: icon,
+                  // Right — GIF or placeholder
+                  SizedBox(
+                    width: 94,
+                    height: 74,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: icon,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -208,4 +222,3 @@ class _ExerciseCard extends StatelessWidget {
     );
   }
 }
-
