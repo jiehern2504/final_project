@@ -33,6 +33,35 @@ class PoseExercisePickerPage extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF4E5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFFB74D)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(Icons.warning_amber_rounded,
+                      color: Color(0xFFE59400), size: 22),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'For accurate detection, stand sideways to the camera so '
+                      'your full body is visible from the side.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: Color(0xFF7A5B00),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
               'On-device pose estimation with live feedback, '
                   'skeleton overlay and rep / hold counts.',
@@ -68,7 +97,6 @@ class PoseExercisePickerPage extends StatelessWidget {
               title: 'Glute Bridge',
               subtitle: 'Hip height · knee angle · reps',
               color: _gluteBridgeColor,
-              // TODO: replace with Image.asset('assets/glute_bridge.gif', ...)
               icon: Image.asset('assets/glute-bridge-exercise.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.gluteBridge),
             ),
@@ -79,7 +107,6 @@ class PoseExercisePickerPage extends StatelessWidget {
               title: 'Plank',
               subtitle: 'Body line · hold time (seconds)',
               color: _plankColor,
-              // TODO: replace with Image.asset('assets/plank.gif', ...)
               icon: Image.asset('assets/plank.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.plank),
             ),
@@ -90,11 +117,7 @@ class PoseExercisePickerPage extends StatelessWidget {
               title: 'Crunch',
               subtitle: 'Shoulder curl · hip angle · reps',
               color: _crunchColor,
-              // TODO: replace with Image.asset('assets/crunch.gif', ...)
-              icon: _PlaceholderIcon(
-                icon: Icons.airline_seat_recline_extra,
-                label: 'Add crunch.gif',
-              ),
+                icon: Image.asset('assets/crunch.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.crunch),
             ),
           ],
@@ -186,30 +209,3 @@ class _ExerciseCard extends StatelessWidget {
   }
 }
 
-// ── Placeholder widget shown until a real GIF is added ────────────────────
-
-class _PlaceholderIcon extends StatelessWidget {
-  const _PlaceholderIcon({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white.withValues(alpha: 0.15),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Icon(icon, color: Colors.white, size: 28),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white60, fontSize: 9),
-          ),
-        ],
-      ),
-    );
-  }
-}
