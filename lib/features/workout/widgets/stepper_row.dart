@@ -1,7 +1,5 @@
 part of '../create_plan_page.dart';
 
-/// A fixed-label number stepper (e.g. "Sets  [-] 3 [+]"). The label text is not
-/// editable — only the number changes.
 class _StepperRow extends StatelessWidget {
   const _StepperRow({
     required this.label,

@@ -6,13 +6,6 @@ import '../home/home_page.dart';
 import '../onboarding/onboarding_flow_page.dart';
 import 'login_page.dart';
 
-/// Listens to [FirebaseAuth] and shows the next required screen:
-///   • not signed in            → [LoginPage]
-///   • signed in, no stats yet   → [OnboardingFlowPage]
-///   • signed in, profile filled → [HomePage]
-///
-/// "Profile filled" means the user's `height` and `weight` are set, which the
-/// onboarding wizard writes on completion.
 class AuthPage extends StatelessWidget {
   const AuthPage({super.key});
 
@@ -37,7 +30,6 @@ class AuthPage extends StatelessWidget {
   }
 }
 
-/// Decides between onboarding and home based on the user's saved profile.
 class _ProfileGate extends StatelessWidget {
   const _ProfileGate({required this.uid});
 
@@ -46,7 +38,10 @@ class _ProfileGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
@@ -56,9 +51,7 @@ class _ProfileGate extends StatelessWidget {
             snapshot.data?.data() ?? <String, dynamic>{};
         final bool profileComplete =
             data['height'] != null && data['weight'] != null;
-        return profileComplete
-            ? const HomePage()
-            : const OnboardingFlowPage();
+        return profileComplete ? const HomePage() : const OnboardingFlowPage();
       },
     );
   }

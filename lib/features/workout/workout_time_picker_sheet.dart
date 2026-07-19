@@ -17,7 +17,6 @@ class WorkoutTimePickerResult {
   bool get hasTime => hour != null && minute != null;
 }
 
-/// Shared sheet: pick daily workout time and toggle reminders.
 Future<WorkoutTimePickerResult?> showWorkoutTimePickerSheet(
   BuildContext context, {
   bool initialReminderEnabled = true,
@@ -72,9 +71,9 @@ class _WorkoutTimePickerSheetState extends State<_WorkoutTimePickerSheet> {
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: _kPrimaryColor,
-                ),
+            colorScheme: Theme.of(
+              context,
+            ).colorScheme.copyWith(primary: _kPrimaryColor),
           ),
           child: child ?? const SizedBox.shrink(),
         );
@@ -138,16 +137,16 @@ class _WorkoutTimePickerSheetState extends State<_WorkoutTimePickerSheet> {
           const SizedBox(height: 16),
           Text(
             'Daily workout time',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
             'When do you usually work out? We can send a daily reminder.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 20),
           SwitchListTile(

@@ -44,13 +44,13 @@ class InboxNotification {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'title': title,
-        'body': body,
-        'createdAt': createdAt.toIso8601String(),
-        'read': read,
-        'type': type,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'createdAt': createdAt.toIso8601String(),
+    'read': read,
+    'type': type,
+  };
 
   static InboxNotification fromJson(Map<String, dynamic> json) {
     return InboxNotification(
@@ -79,8 +79,9 @@ class NotificationInboxRepository {
 
   Stream<int> watchUnreadCount() {
     return Stream<int>.multi((MultiStreamController<int> controller) async {
-      final StreamSubscription<int> sub =
-          _unreadController.stream.listen(controller.add);
+      final StreamSubscription<int> sub = _unreadController.stream.listen(
+        controller.add,
+      );
       controller.onCancel = sub.cancel;
       final List<InboxNotification> items = await _loadItems();
       controller.add(_unreadCount(items));
@@ -91,8 +92,9 @@ class NotificationInboxRepository {
     return Stream<List<InboxNotification>>.multi((
       MultiStreamController<List<InboxNotification>> controller,
     ) async {
-      final StreamSubscription<List<InboxNotification>> sub =
-          _itemsController.stream.listen(controller.add);
+      final StreamSubscription<List<InboxNotification>> sub = _itemsController
+          .stream
+          .listen(controller.add);
       controller.onCancel = sub.cancel;
       final List<InboxNotification> items = await _loadItems();
       controller.add(List<InboxNotification>.unmodifiable(items));
@@ -153,7 +155,9 @@ class NotificationInboxRepository {
   Future<void> syncDeliveredFromActiveNotifications(
     List<ActiveNotification> active,
   ) async {
-    final List<ActiveNotification> ours = active.where(_isOurNotification).toList();
+    final List<ActiveNotification> ours = active
+        .where(_isOurNotification)
+        .toList();
     final Set<int> currentIds = ours
         .map((ActiveNotification n) => n.id)
         .whereType<int>()
@@ -174,13 +178,13 @@ class NotificationInboxRepository {
           'NotificationInbox: synced delivery id=$notificationId (daily)',
         );
       } else if (notificationId == _kTestNotificationId) {
-        final String inboxId =
-            'test_${DateTime.now().millisecondsSinceEpoch}';
+        final String inboxId = 'test_${DateTime.now().millisecondsSinceEpoch}';
         await _addIfNew(
           InboxNotification(
             id: inboxId,
             title: notification.title ?? 'Workout reminder test',
-            body: notification.body ??
+            body:
+                notification.body ??
                 'This is a diagnostic notification trigger.',
             createdAt: DateTime.now(),
             read: false,
@@ -208,7 +212,10 @@ class NotificationInboxRepository {
     String? payload,
     int? notificationId,
   }) async {
-    final String id = _idFromTap(payload: payload, notificationId: notificationId);
+    final String id = _idFromTap(
+      payload: payload,
+      notificationId: notificationId,
+    );
     final List<InboxNotification> items = await _loadItems();
     if (items.any((InboxNotification n) => n.id == id)) return;
 
@@ -216,9 +223,11 @@ class NotificationInboxRepository {
     await _addIfNew(
       InboxNotification(
         id: id,
-        title: title ??
+        title:
+            title ??
             (isTest ? 'Workout reminder test' : 'Time for your workout!'),
-        body: body ??
+        body:
+            body ??
             (isTest
                 ? 'This is a diagnostic notification trigger.'
                 : 'Open the app to see today\'s plan.'),
@@ -232,13 +241,11 @@ class NotificationInboxRepository {
   Future<void> _addIfNew(InboxNotification notification) async {
     final List<InboxNotification> items = await _loadItems();
     if (items.any((InboxNotification n) => n.id == notification.id)) return;
-    final List<InboxNotification> updated = <InboxNotification>[
-      notification,
-      ...items,
-    ]..sort(
-        (InboxNotification a, InboxNotification b) =>
-            b.createdAt.compareTo(a.createdAt),
-      );
+    final List<InboxNotification> updated =
+        <InboxNotification>[notification, ...items]..sort(
+          (InboxNotification a, InboxNotification b) =>
+              b.createdAt.compareTo(a.createdAt),
+        );
     await _saveItems(updated);
   }
 
@@ -246,13 +253,13 @@ class NotificationInboxRepository {
     final List<InboxNotification> items = await _loadItems();
     if (items.every((InboxNotification n) => n.read)) return;
     await _saveItems(
-      items
-          .map((InboxNotification n) => n.copyWith(read: true))
-          .toList(),
+      items.map((InboxNotification n) => n.copyWith(read: true)).toList(),
     );
   }
 
-  Future<void> syncMissedReminders({required WorkoutReminderPrefs prefs}) async {
+  Future<void> syncMissedReminders({
+    required WorkoutReminderPrefs prefs,
+  }) async {
     if (!prefs.enabled || !prefs.hasTime) {
       await _setLastSync(DateTime.now());
       return;

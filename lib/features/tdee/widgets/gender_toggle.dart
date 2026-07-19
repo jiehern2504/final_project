@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// The top-right male / female toggle. [gender] is 'male' or 'female'.
 class GenderToggle extends StatelessWidget {
   const GenderToggle({
     super.key,

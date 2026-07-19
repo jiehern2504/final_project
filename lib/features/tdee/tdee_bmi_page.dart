@@ -9,11 +9,6 @@ import 'widgets/gender_toggle.dart';
 import 'widgets/input_card.dart';
 import 'widgets/result_card.dart';
 
-/// BMI + TDEE calculator page.
-///
-/// Switches between the two calculators (top-left), toggles gender (top-right),
-/// and prefills the inputs from the user's saved profile. All formulas live in
-/// [HealthCalculator]; the visual pieces live under `widgets/`.
 class TdeeBmiPage extends StatefulWidget {
   const TdeeBmiPage({super.key});
 
@@ -59,8 +54,11 @@ class _TdeeBmiPageState extends State<TdeeBmiPage> {
       return;
     }
     try {
-      final DocumentSnapshot<Map<String, dynamic>> doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final DocumentSnapshot<Map<String, dynamic>> doc = await FirebaseFirestore
+          .instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
       if (!mounted) return;
       setState(() {
@@ -71,7 +69,8 @@ class _TdeeBmiPageState extends State<TdeeBmiPage> {
         if (height != null) _heightController.text = _trimNumber(height);
         if (weight != null) _weightController.text = _trimNumber(weight);
         _gender = data['gender'] == 'female' ? 'female' : 'male';
-        final String activity = (data['activityLevel'] as String?) ?? 'moderate';
+        final String activity =
+            (data['activityLevel'] as String?) ?? 'moderate';
         _activity = kActivityFactors.containsKey(activity)
             ? activity
             : 'moderate';
@@ -82,7 +81,6 @@ class _TdeeBmiPageState extends State<TdeeBmiPage> {
     }
   }
 
-  /// Renders a stored number without a trailing ".0" (e.g. 175.0 → "175").
   String _trimNumber(Object value) {
     final double? d = double.tryParse(value.toString());
     if (d == null) return value.toString();
@@ -108,10 +106,7 @@ class _TdeeBmiPageState extends State<TdeeBmiPage> {
       height: _height,
       weight: _weight,
     );
-    final double? bmi = HealthCalculator.bmi(
-      height: _height,
-      weight: _weight,
-    );
+    final double? bmi = HealthCalculator.bmi(height: _height, weight: _weight);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -143,12 +138,7 @@ class _TdeeBmiPageState extends State<TdeeBmiPage> {
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: Column(
                       children: [
-                        ResultCard(
-                          mode: _mode,
-                          bmi: bmi,
-                          bmr: bmr,
-                          tdee: tdee,
-                        ),
+                        ResultCard(mode: _mode, bmi: bmi, bmr: bmr, tdee: tdee),
                         const SizedBox(height: 14),
                         InputCard(
                           mode: _mode,

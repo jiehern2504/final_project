@@ -36,10 +36,10 @@ class PlanExercise {
   final String setsLabel;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'exerciseId': exerciseId,
-        'title': title,
-        'setsLabel': setsLabel,
-      };
+    'exerciseId': exerciseId,
+    'title': title,
+    'setsLabel': setsLabel,
+  };
 
   factory PlanExercise.fromMap(Map<String, dynamic> map) {
     return PlanExercise(
@@ -64,7 +64,6 @@ class PlanDay {
   final List<PlanExercise> exercises;
   final bool completed;
 
-  /// A rest day has no exercises — the user just marks it done.
   final bool isRest;
 
   PlanDay copyWith({bool? completed, bool? isRest}) {
@@ -78,12 +77,12 @@ class PlanDay {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'dayNumber': dayNumber,
-        'label': label,
-        'completed': completed,
-        'isRest': isRest,
-        'exercises': exercises.map((PlanExercise e) => e.toMap()).toList(),
-      };
+    'dayNumber': dayNumber,
+    'label': label,
+    'completed': completed,
+    'isRest': isRest,
+    'exercises': exercises.map((PlanExercise e) => e.toMap()).toList(),
+  };
 
   factory PlanDay.fromMap(Map<String, dynamic> map) {
     final List<dynamic> rawExercises =
@@ -102,10 +101,7 @@ class PlanDay {
 }
 
 class PlanProgress {
-  const PlanProgress({
-    required this.completedDays,
-    required this.totalDays,
-  });
+  const PlanProgress({required this.completedDays, required this.totalDays});
 
   final int completedDays;
   final int totalDays;
@@ -114,9 +110,9 @@ class PlanProgress {
       totalDays <= 0 ? 0 : (completedDays / totalDays).clamp(0.0, 1.0);
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'completedDays': completedDays,
-        'totalDays': totalDays,
-      };
+    'completedDays': completedDays,
+    'totalDays': totalDays,
+  };
 
   factory PlanProgress.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
@@ -155,25 +151,16 @@ class WorkoutPlan {
   final DateTime? startedAt;
   final DateTime? createdAt;
 
-  /// Links the weeks of a multi-week plan. Null for standalone (single-week)
-  /// plans. All weeks of the same month share one [seriesId].
   final String? seriesId;
 
-  /// 1-based position of this week within its series (1 for single-week plans).
   final int weekNumber;
 
-  /// How many weeks the whole series has (1 for single-week plans).
   final int totalWeeks;
 
-  /// A locked week is not yet available — it stays hidden until the previous
-  /// week is completed and the user chooses to start it.
   final bool locked;
 
-  /// The last calendar day on which a day was marked complete. Used to enforce
-  /// "one day per day" — the user can't mark another day until the next day.
   final DateTime? lastMarkedAt;
 
-  /// True when this plan is one week of a multi-week series.
   bool get isSeries => totalWeeks > 1 && seriesId != null;
 
   bool get isStarted => status == WorkoutPlanStatus.active;
@@ -212,29 +199,25 @@ class WorkoutPlan {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'userId': userId,
-        'title': title,
-        'status': workoutPlanStatusToString(status),
-        'days': days.map((PlanDay d) => d.toMap()).toList(),
-        'progress': progress.toMap(),
-        'weekNumber': weekNumber,
-        'totalWeeks': totalWeeks,
-        'locked': locked,
-        if (seriesId != null) 'seriesId': seriesId,
-        if (lastMarkedAt != null)
-          'lastMarkedAt': Timestamp.fromDate(lastMarkedAt!),
-        if (startedAt != null)
-          'startedAt': Timestamp.fromDate(startedAt!),
-        if (createdAt != null)
-          'createdAt': Timestamp.fromDate(createdAt!),
-      };
+    'userId': userId,
+    'title': title,
+    'status': workoutPlanStatusToString(status),
+    'days': days.map((PlanDay d) => d.toMap()).toList(),
+    'progress': progress.toMap(),
+    'weekNumber': weekNumber,
+    'totalWeeks': totalWeeks,
+    'locked': locked,
+    if (seriesId != null) 'seriesId': seriesId,
+    if (lastMarkedAt != null) 'lastMarkedAt': Timestamp.fromDate(lastMarkedAt!),
+    if (startedAt != null) 'startedAt': Timestamp.fromDate(startedAt!),
+    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+  };
 
   factory WorkoutPlan.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
-    final List<dynamic> rawDays =
-        data['days'] as List<dynamic>? ?? <dynamic>[];
+    final List<dynamic> rawDays = data['days'] as List<dynamic>? ?? <dynamic>[];
     final Map<String, dynamic>? progressMap =
         data['progress'] as Map<String, dynamic>?;
 

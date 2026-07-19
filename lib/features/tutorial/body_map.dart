@@ -50,10 +50,7 @@ class _BodyMapState extends State<BodyMap> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final Size size = Size(
-          constraints.maxWidth,
-          constraints.maxHeight,
-        );
+        final Size size = Size(constraints.maxWidth, constraints.maxHeight);
 
         return GestureDetector(
           onTapDown: (_) => setState(() => _pressed = true),
@@ -69,10 +66,7 @@ class _BodyMapState extends State<BodyMap> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(
-                  _asset,
-                  fit: BoxFit.contain,
-                ),
+                Image.asset(_asset, fit: BoxFit.contain),
                 Positioned.fill(
                   child: _HighlightOverlay(
                     side: widget.side,
@@ -138,8 +132,9 @@ class _HighlightPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final List<MuscleRegion> regions = MuscleRegions.forSide(side);
-    final Iterable<MuscleRegion> matches =
-        regions.where((MuscleRegion r) => r.id == selected);
+    final Iterable<MuscleRegion> matches = regions.where(
+      (MuscleRegion r) => r.id == selected,
+    );
 
     for (final MuscleRegion r in matches) {
       canvas.drawPath(r.pathBuilder(size), paint);
@@ -153,4 +148,3 @@ class _HighlightPainter extends CustomPainter {
         oldDelegate.color != color;
   }
 }
-

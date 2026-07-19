@@ -30,26 +30,14 @@ class ExerciseVideoPlayer extends StatefulWidget {
   final double height;
   final VoidCallback? onPlaybackFailed;
 
-  /// When false, the controller is NOT created yet (a shimmer is shown). Used
-  /// to stagger multiple players so they don't grab hardware decoders and
-  /// network bandwidth at the exact same moment.
   final bool active;
 
-  /// Fires once the player has "settled" — either it started playing or it
-  /// failed. Lets a parent release a gate that was waiting on this player.
   final VoidCallback? onSettled;
 
-  /// When false the video does NOT auto-start: it shows a play button and the
-  /// controller is created lazily on the first tap. This keeps two videos from
-  /// decoding at the same time (which froze one of them on some devices).
   final bool autoPlay;
 
-  /// When a parent sets this true, the video pauses. Used to enforce that only
-  /// one of several videos plays at a time.
   final bool forcePaused;
 
-  /// Notifies the parent when THIS video starts (true) or is paused by the user
-  /// (false), so the parent can coordinate mutual-exclusion between videos.
   final ValueChanged<bool>? onPlayingChanged;
 
   bool get _coverMode => previewMode || detailStyle;
@@ -64,7 +52,6 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
   bool _playbackFailedNotified = false;
   bool _settledNotified = false;
 
-  // Stall watchdog: if playback does not advance for a while, auto-retry once.
   Timer? _stallTimer;
   Duration _lastPosition = Duration.zero;
   int _stalledTicks = 0;
@@ -93,11 +80,9 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
         widget.active &&
         widget.autoPlay &&
         _controller == null) {
-      // Gate opened — start now.
       _initController();
     }
 
-    // Parent asked us to pause (another video took over).
     if (widget.forcePaused && !oldWidget.forcePaused) {
       final c = _controller;
       if (c != null && c.value.isInitialized && c.value.isPlaying) {
@@ -106,18 +91,16 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
     }
   }
 
-  /// Tap handler for tap-to-play (autoPlay == false).
   void _togglePlay() {
     final controller = _controller;
     if (controller == null) {
-      // First tap → create the controller, initialise and play.
       _playbackFailedNotified = false;
       _autoRetried = false;
       _initController();
       widget.onPlayingChanged?.call(true);
       return;
     }
-    if (!_initialized) return; // still loading
+    if (!_initialized) return;
     setState(() {
       if (controller.value.isPlaying) {
         controller.pause();
@@ -133,16 +116,18 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
     _controller = VideoPlayerController.asset(widget.videoUrl)
       ..setLooping(_looping)
       ..setVolume(widget.previewMode || widget.muted ? 0 : 1)
-      ..initialize().then((_) {
-        if (!mounted) return;
-        setState(() => _initialized = true);
-        _controller!.play();
-        _notifySettled();
-        _startStallWatchdog();
-      }).catchError((Object e) {
-        _onInitError(e);
-        return null;
-      });
+      ..initialize()
+          .then((_) {
+            if (!mounted) return;
+            setState(() => _initialized = true);
+            _controller!.play();
+            _notifySettled();
+            _startStallWatchdog();
+          })
+          .catchError((Object e) {
+            _onInitError(e);
+            return null;
+          });
   }
 
   void _notifySettled() {
@@ -151,8 +136,6 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
     widget.onSettled?.call();
   }
 
-  /// Periodically checks that playback is advancing. If it stays stuck (stuck
-  /// buffering / frozen frame) for a few seconds, retry once.
   void _startStallWatchdog() {
     _stallTimer?.cancel();
     _lastPosition = Duration.zero;
@@ -162,8 +145,7 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
       if (!mounted || controller == null || !controller.value.isInitialized) {
         return;
       }
-      // If it isn't meant to be playing (e.g. app backgrounded), don't treat
-      // the frozen position as a stall.
+
       if (!controller.value.isPlaying) {
         _stalledTicks = 0;
         _lastPosition = controller.value.position;
@@ -176,10 +158,9 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
         _stalledTicks = 0;
         return;
       }
-      // Should be playing but not advancing this tick.
+
       _stalledTicks++;
       if (_stalledTicks >= 2 && !_autoRetried) {
-        // ~6s stuck → retry once via the parent's retry hook.
         _autoRetried = true;
         _stallTimer?.cancel();
         debugPrint('ExerciseVideo stalled, auto-retrying [${widget.videoUrl}]');
@@ -216,8 +197,6 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
     final controller = _controller;
     final bool ready = controller != null && _initialized;
 
-    // Base content: the video if ready, a dark placeholder if not started yet
-    // (tap-to-play), otherwise the loading shimmer.
     final Widget content;
     if (ready) {
       final Widget video = AspectRatio(
@@ -245,10 +224,8 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
       );
     }
 
-    // Auto-play mode: no tap controls.
     if (widget.autoPlay) return content;
 
-    // Tap-to-play mode: show a play button when not playing, and toggle on tap.
     final bool showPlayButton =
         _controller == null || (ready && !controller.value.isPlaying);
     return GestureDetector(
@@ -272,7 +249,6 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
   }
 }
 
-/// Plain dark box shown before a tap-to-play video is started (no decoder yet).
 class _PlaceholderBox extends StatelessWidget {
   const _PlaceholderBox({required this.height, required this.clipTop});
 
@@ -333,9 +309,7 @@ class _CoverVideoFrame extends StatelessWidget {
               ),
             ),
             if (showPlayOverlay) ...[
-              Container(
-                color: Colors.black.withValues(alpha: 0.15),
-              ),
+              Container(color: Colors.black.withValues(alpha: 0.15)),
               Icon(
                 Icons.play_circle_fill_rounded,
                 size: 48,

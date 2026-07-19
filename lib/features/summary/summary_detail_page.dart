@@ -12,8 +12,6 @@ const Color _kChip = Color(0xFFEEF5F0);
 
 enum _Level { month, year }
 
-/// Full progress view opened from the Home summary card. Month and Year only
-/// (no week — weight isn't recorded daily), with drill-down from year → month.
 class SummaryDetailPage extends StatefulWidget {
   const SummaryDetailPage({super.key, required this.data});
 
@@ -80,10 +78,7 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
     final List<ChartPoint> points = _points();
     return Scaffold(
       backgroundColor: _kBg,
-      appBar: AppBar(
-        title: const Text('Progress details'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Progress details'), centerTitle: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
@@ -108,8 +103,10 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
             if (points.isNotEmpty && _level == _Level.year) ...[
               const SizedBox(height: 4),
               const Center(
-                child: Text('Tap a month to open it',
-                    style: TextStyle(fontSize: 11, color: _kMuted)),
+                child: Text(
+                  'Tap a month to open it',
+                  style: TextStyle(fontSize: 11, color: _kMuted),
+                ),
               ),
             ],
             const SizedBox(height: 16),
@@ -157,17 +154,26 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
         _breadcrumb(),
         Row(
           children: [
-            _iconBtn(Icons.chevron_left, _canShift(-1) ? () => _shift(-1) : null),
+            _iconBtn(
+              Icons.chevron_left,
+              _canShift(-1) ? () => _shift(-1) : null,
+            ),
             SizedBox(
               width: 104,
               child: Text(
                 _periodLabel(),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: _kText),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _kText,
+                ),
               ),
             ),
-            _iconBtn(Icons.chevron_right, _canShift(1) ? () => _shift(1) : null),
+            _iconBtn(
+              Icons.chevron_right,
+              _canShift(1) ? () => _shift(1) : null,
+            ),
           ],
         ),
       ],
@@ -185,22 +191,30 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
           style: TextStyle(
             fontSize: 12,
             color: _level == _Level.year ? _kText : _kMuted,
-            fontWeight:
-                _level == _Level.year ? FontWeight.w700 : FontWeight.w400,
+            fontWeight: _level == _Level.year
+                ? FontWeight.w700
+                : FontWeight.w400,
           ),
         ),
       ),
     ];
     if (_level == _Level.month) {
-      parts.add(const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 5),
-        child: Text('▸', style: TextStyle(fontSize: 11, color: _kMuted)),
-      ));
-      parts.add(Text(
-        SummaryData.months[_anchor.month - 1],
-        style: const TextStyle(
-            fontSize: 12, color: _kText, fontWeight: FontWeight.w700),
-      ));
+      parts.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 5),
+          child: Text('▸', style: TextStyle(fontSize: 11, color: _kMuted)),
+        ),
+      );
+      parts.add(
+        Text(
+          SummaryData.months[_anchor.month - 1],
+          style: const TextStyle(
+            fontSize: 12,
+            color: _kText,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
     }
     return Row(children: parts);
   }
@@ -262,8 +276,10 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
               const SizedBox(
                 height: 150,
                 child: Center(
-                  child: Text('No weight logged for this period.',
-                      style: TextStyle(color: _kMuted)),
+                  child: Text(
+                    'No weight logged for this period.',
+                    style: TextStyle(color: _kMuted),
+                  ),
                 ),
               ),
           ],
@@ -279,7 +295,9 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
         : '—';
     final Color deltaColor = !s.hasWeight
         ? _kMuted
-        : (s.weightDelta <= 0 ? SummaryChart.weightColor : const Color(0xFFD9803F));
+        : (s.weightDelta <= 0
+              ? SummaryChart.weightColor
+              : const Color(0xFFD9803F));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +305,10 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
         Text(
           '${_level == _Level.year ? 'This year' : 'This month'} · ${_periodLabel()}',
           style: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700, color: _kText),
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: _kText,
+          ),
         ),
         const SizedBox(height: 10),
         Row(
@@ -309,25 +330,27 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
     if (_level == _Level.month) {
       final List<WorkoutLog> sessions = widget.data.sessionsInMonth(_anchor);
       if (sessions.isEmpty) {
-        return const <Widget>[
-          _RowLine(left: 'No workouts logged', right: ''),
-        ];
+        return const <Widget>[_RowLine(left: 'No workouts logged', right: '')];
       }
       return sessions
-          .map((WorkoutLog w) => _RowLine(
-                left: '${SummaryData.months[w.at.month - 1]} ${w.at.day}',
-                right: '${w.title} · ${w.sets} sets',
-                pill: true,
-              ))
+          .map(
+            (WorkoutLog w) => _RowLine(
+              left: '${SummaryData.months[w.at.month - 1]} ${w.at.day}',
+              right: '${w.title} · ${w.sets} sets',
+              pill: true,
+            ),
+          )
           .toList();
     }
-    // year view: one row per month
+
     return points
-        .map((ChartPoint p) => _RowLine(
-              left:
-                  '${p.label} · ${p.weight != null ? '${p.weight!.toStringAsFixed(1)} kg' : '—'}',
-              right: '${p.metric} workouts · ${p.sets} sets',
-            ))
+        .map(
+          (ChartPoint p) => _RowLine(
+            left:
+                '${p.label} · ${p.weight != null ? '${p.weight!.toStringAsFixed(1)} kg' : '—'}',
+            right: '${p.metric} workouts · ${p.sets} sets',
+          ),
+        )
         .toList();
   }
 
@@ -342,15 +365,23 @@ class _SummaryDetailPageState extends State<SummaryDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label.toUpperCase(),
-                style: const TextStyle(
-                    fontSize: 10, color: _kMuted, letterSpacing: 0.4)),
+            Text(
+              label.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                color: _kMuted,
+                letterSpacing: 0.4,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: valueColor)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: valueColor,
+              ),
+            ),
           ],
         ),
       ),
@@ -369,9 +400,10 @@ class _Key extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 12, color: _kMuted)),
       ],
@@ -397,27 +429,36 @@ class _RowLine extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(
-            child: Text(left,
-                style: const TextStyle(fontSize: 13, color: _kText)),
+            child: Text(
+              left,
+              style: const TextStyle(fontSize: 13, color: _kText),
+            ),
           ),
           const SizedBox(width: 8),
           if (right.isNotEmpty)
             pill
                 ? Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: _kPrimary.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text(right,
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: _kPrimary)),
+                    child: Text(
+                      right,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _kPrimary,
+                      ),
+                    ),
                   )
-                : Text(right,
-                    style: const TextStyle(fontSize: 12, color: _kMuted)),
+                : Text(
+                    right,
+                    style: const TextStyle(fontSize: 12, color: _kMuted),
+                  ),
         ],
       ),
     );

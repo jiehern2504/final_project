@@ -18,9 +18,12 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage>
     with WidgetsBindingObserver {
-  final UserPreferencesRepository _prefsRepository = UserPreferencesRepository();
-  final WorkoutReminderService _reminderService = WorkoutReminderService.instance;
-  final NotificationInboxRepository _inbox = NotificationInboxRepository.instance;
+  final UserPreferencesRepository _prefsRepository =
+      UserPreferencesRepository();
+  final WorkoutReminderService _reminderService =
+      WorkoutReminderService.instance;
+  final NotificationInboxRepository _inbox =
+      NotificationInboxRepository.instance;
 
   PermissionStatus? _status;
   bool _loadingPermission = false;
@@ -51,9 +54,7 @@ class _NotificationsPageState extends State<NotificationsPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _refreshTopState();
-      _reminderService
-          .syncMissedReminders(_prefsRepository)
-          .catchError((_) {});
+      _reminderService.syncMissedReminders(_prefsRepository).catchError((_) {});
     }
   }
 
@@ -65,8 +66,8 @@ class _NotificationsPageState extends State<NotificationsPage>
     });
     try {
       final PermissionStatus status = await Permission.notification.status;
-      final ReminderDiagnostics diagnostics =
-          await _reminderService.getDiagnostics();
+      final ReminderDiagnostics diagnostics = await _reminderService
+          .getDiagnostics();
       if (!mounted) return;
       setState(() {
         _status = status;
@@ -121,10 +122,7 @@ class _NotificationsPageState extends State<NotificationsPage>
         titleSpacing: 0,
         title: const Text(
           'Notifications',
-          style: TextStyle(
-            color: AppColors.text,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -136,23 +134,24 @@ class _NotificationsPageState extends State<NotificationsPage>
             children: [
               StreamBuilder<WorkoutReminderPrefs>(
                 stream: _prefsRepository.watchWorkoutReminder(),
-                builder: (
-                  BuildContext context,
-                  AsyncSnapshot<WorkoutReminderPrefs> snapshot,
-                ) {
-                  final WorkoutReminderPrefs prefs =
-                      snapshot.data ?? const WorkoutReminderPrefs();
-                  return _PermissionCard(
-                    loading: _loadingPermission || _loadingDiagnostics,
-                    reminderPrefs: prefs,
-                    permissionGranted: _permissionGranted,
-                    diagnostics: _diagnostics,
-                    onRequestPermission: _requestPermission,
-                    onOpenSettings: _openSettings,
-                    onOpenWorkoutPlan: _openWorkoutPlan,
-                    onRefresh: _refreshTopState,
-                  );
-                },
+                builder:
+                    (
+                      BuildContext context,
+                      AsyncSnapshot<WorkoutReminderPrefs> snapshot,
+                    ) {
+                      final WorkoutReminderPrefs prefs =
+                          snapshot.data ?? const WorkoutReminderPrefs();
+                      return _PermissionCard(
+                        loading: _loadingPermission || _loadingDiagnostics,
+                        reminderPrefs: prefs,
+                        permissionGranted: _permissionGranted,
+                        diagnostics: _diagnostics,
+                        onRequestPermission: _requestPermission,
+                        onOpenSettings: _openSettings,
+                        onOpenWorkoutPlan: _openWorkoutPlan,
+                        onRefresh: _refreshTopState,
+                      );
+                    },
               ),
               const SizedBox(height: 20),
               const Text(
@@ -166,24 +165,25 @@ class _NotificationsPageState extends State<NotificationsPage>
               const SizedBox(height: 10),
               StreamBuilder<List<InboxNotification>>(
                 stream: _inbox.watchAll(),
-                builder: (
-                  BuildContext context,
-                  AsyncSnapshot<List<InboxNotification>> snapshot,
-                ) {
-                  final List<InboxNotification> items =
-                      snapshot.data ?? <InboxNotification>[];
-                  if (items.isEmpty) {
-                    return const _EmptyInboxState();
-                  }
-                  return Column(
-                    children: items
-                        .map(
-                          (InboxNotification item) =>
-                              _InboxNotificationRow(notification: item),
-                        )
-                        .toList(),
-                  );
-                },
+                builder:
+                    (
+                      BuildContext context,
+                      AsyncSnapshot<List<InboxNotification>> snapshot,
+                    ) {
+                      final List<InboxNotification> items =
+                          snapshot.data ?? <InboxNotification>[];
+                      if (items.isEmpty) {
+                        return const _EmptyInboxState();
+                      }
+                      return Column(
+                        children: items
+                            .map(
+                              (InboxNotification item) =>
+                                  _InboxNotificationRow(notification: item),
+                            )
+                            .toList(),
+                      );
+                    },
               ),
               const SizedBox(height: 28),
             ],
@@ -270,7 +270,10 @@ class _PermissionCard extends StatelessWidget {
               else
                 IconButton(
                   onPressed: onRefresh,
-                  icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
             ],
           ),
@@ -386,8 +389,9 @@ class _InboxNotificationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color titleColor =
-        notification.read ? AppColors.textSecondary : AppColors.text;
+    final Color titleColor = notification.read
+        ? AppColors.textSecondary
+        : AppColors.text;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -426,8 +430,9 @@ class _InboxNotificationRow extends StatelessWidget {
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 14,
-                    fontWeight:
-                        notification.read ? FontWeight.w500 : FontWeight.w700,
+                    fontWeight: notification.read
+                        ? FontWeight.w500
+                        : FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),

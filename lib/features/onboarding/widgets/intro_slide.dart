@@ -4,8 +4,6 @@ import '../../../core/theme/app_colors.dart';
 import 'bear_mascot.dart';
 import 'onboarding_scaffold.dart';
 
-/// One slide of the intro carousel: a mascot panel, headline, subtitle, page
-/// dots and a primary button.
 class IntroSlide extends StatelessWidget {
   const IntroSlide({
     super.key,

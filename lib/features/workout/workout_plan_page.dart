@@ -697,14 +697,17 @@ class _CondensedDayCard extends StatelessWidget {
             if (day.isRest)
               Row(
                 children: [
-                  Icon(Icons.bedtime_outlined,
-                      size: 16, color: _withOpacity(_kPrimaryColor, 0.8)),
+                  Icon(
+                    Icons.bedtime_outlined,
+                    size: 16,
+                    color: _withOpacity(_kPrimaryColor, 0.8),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Rest day',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _withOpacity(_kTextColor, 0.85),
-                        ),
+                      color: _withOpacity(_kTextColor, 0.85),
+                    ),
                   ),
                 ],
               )
@@ -723,10 +726,10 @@ class _CondensedDayCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           exercise.title,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: _withOpacity(_kTextColor, 0.85),
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: _withOpacity(_kTextColor, 0.85),
+                              ),
                         ),
                       ),
                     ],

@@ -206,7 +206,6 @@ const List<TutorialExercise> _allExercises = [
   ),
 ];
 
-/// Full tutorial catalog for exercise pickers and search.
 List<TutorialExercise> get allTutorialExercises =>
     List<TutorialExercise>.unmodifiable(_allExercises);
 
@@ -221,10 +220,9 @@ TutorialExercise? findExerciseById(String exerciseId) {
   return null;
 }
 
-/// All Firebase Storage paths for tutorial videos (21 exercises × 2 angles).
 List<String> get allTutorialVideoStoragePaths => [
-      for (final exercise in _allExercises) ...[
-        exercise.frontStoragePath,
-        exercise.sideStoragePath,
-      ],
-    ];
+  for (final exercise in _allExercises) ...[
+    exercise.frontStoragePath,
+    exercise.sideStoragePath,
+  ],
+];

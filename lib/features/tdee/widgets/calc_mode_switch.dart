@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../health_calculator.dart';
 
-/// The top-left "BMI | TDEE" segmented switch.
 class CalcModeSwitch extends StatelessWidget {
   const CalcModeSwitch({
     super.key,

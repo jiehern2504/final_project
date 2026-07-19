@@ -2,15 +2,7 @@ import 'package:flutter/material.dart';
 
 enum BodySide { front, back }
 
-enum MuscleId {
-  arms,
-  chest,
-  abs,
-  legs,
-  shoulders,
-  back,
-  glutes,
-}
+enum MuscleId { arms, chest, abs, legs, shoulders, back, glutes }
 
 extension MuscleIdLabel on MuscleId {
   String get label {
@@ -46,4 +38,3 @@ class MuscleRegion {
 
   bool hitTest(Offset point, Size size) => pathBuilder(size).contains(point);
 }
-

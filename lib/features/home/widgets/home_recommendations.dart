@@ -25,10 +25,7 @@ class _RecommendationList extends StatelessWidget {
 }
 
 class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({
-    required this.video,
-    required this.textColor,
-  });
+  const _RecommendationCard({required this.video, required this.textColor});
 
   final RecommendedVideo video;
   final Color textColor;
@@ -67,16 +64,16 @@ class _RecommendationCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: textColor,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${video.channel} · ${video.duration}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _withOpacity(textColor, 0.6),
-                        ),
+                      color: _withOpacity(textColor, 0.6),
+                    ),
                   ),
                 ],
               ),

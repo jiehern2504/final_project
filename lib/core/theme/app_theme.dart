@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// The app-wide theme. Centralising the brand here means the auth/profile
-/// screens (which use default-styled widgets) automatically pick up the green
-/// palette, visible input fields and rounded cards — no per-screen styling
-/// needed.
 ThemeData buildAppTheme() {
   final ColorScheme scheme = ColorScheme.fromSeed(
     seedColor: AppColors.primary,
@@ -25,7 +21,7 @@ ThemeData buildAppTheme() {
       centerTitle: true,
       foregroundColor: AppColors.text,
     ),
-    // Light-grey fill so fields are clearly visible on white cards.
+
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: const Color(0xFFF1F4F1),
@@ -63,9 +59,7 @@ ThemeData buildAppTheme() {
         minimumSize: const Size.fromHeight(52),
         elevation: 0,
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     ),
   );

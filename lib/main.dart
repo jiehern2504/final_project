@@ -9,7 +9,7 @@ import 'features/planner/user_preferences_repository.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  // Keep notification init in startup so reminders are ready before app routes.
+
   await WorkoutReminderService.instance.init();
 
   FirebaseAuth.instance.authStateChanges().listen((User? user) {
@@ -34,9 +34,9 @@ void main() async {
         .catchError((_) {});
   }
 
-  await WorkoutReminderService.instance
-      .syncDeliveredNotifications()
-      .catchError((_) {});
+  await WorkoutReminderService.instance.syncDeliveredNotifications().catchError(
+    (_) {},
+  );
 
   runApp(const MyApp());
 }

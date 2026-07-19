@@ -1,14 +1,12 @@
 import 'models/workout_plan_models.dart';
 
-/// Rule-based MVP plan builder from user profile + optional chat prompt.
 class PlanGenerator {
   static WorkoutPlan buildPlan({
     required String userId,
     required Map<String, dynamic> profile,
     String? userPrompt,
   }) {
-    final String activity =
-        (profile['activityLevel'] as String?) ?? 'moderate';
+    final String activity = (profile['activityLevel'] as String?) ?? 'moderate';
     final int dayCount = _dayCountForActivity(activity, userPrompt);
     final List<_TemplateDay> template = _templateForPrompt(userPrompt);
 

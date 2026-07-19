@@ -4,7 +4,6 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 import 'pose_coordinate_translator.dart';
 
-/// Skeleton overlay; uses ML Kit coordinate translation so lines match the preview.
 class PosePainter extends CustomPainter {
   PosePainter({
     required this.imageSize,
@@ -88,11 +87,7 @@ class PosePainter extends CustomPainter {
         rightPaint,
       );
 
-      paintLine(
-        PoseLandmarkType.leftHip,
-        PoseLandmarkType.leftKnee,
-        leftPaint,
-      );
+      paintLine(PoseLandmarkType.leftHip, PoseLandmarkType.leftKnee, leftPaint);
       paintLine(
         PoseLandmarkType.leftKnee,
         PoseLandmarkType.leftAnkle,

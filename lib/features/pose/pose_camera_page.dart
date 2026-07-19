@@ -38,7 +38,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
   PoseFeedback _feedback = PoseFeedback.noBody;
   PoseFeedback _pendingFeedback = PoseFeedback.noBody;
   DateTime? _lastUiUpdate;
-  // Keeps the green "Good! Rep counted" banner on screen briefly after a rep.
+
   DateTime? _repFlashUntil;
   int _frameIndex = 0;
   bool _processing = false;
@@ -47,12 +47,11 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
   Size _inputImageSize = Size.zero;
   InputImageRotation _lastRotation = InputImageRotation.rotation0deg;
 
-  // ── Rep / hold counters ────────────────────────────────────────────────────
-  final PushUpRepCounter      _pushUpReps      = PushUpRepCounter();
-  final SquatRepCounter       _squatReps       = SquatRepCounter();
+  final PushUpRepCounter _pushUpReps = PushUpRepCounter();
+  final SquatRepCounter _squatReps = SquatRepCounter();
   final GluteBridgeRepCounter _gluteBridgeReps = GluteBridgeRepCounter();
-  final PlankHoldTimer        _plankTimer      = PlankHoldTimer();
-  final CrunchRepCounter      _crunchReps      = CrunchRepCounter();
+  final PlankHoldTimer _plankTimer = PlankHoldTimer();
+  final CrunchRepCounter _crunchReps = CrunchRepCounter();
 
   @override
   void initState() {
@@ -74,7 +73,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       setState(() {
         _initializing = false;
         _error =
-        'Camera permission is required for live pose feedback. You can enable it in system settings.';
+            'Camera permission is required for live pose feedback. You can enable it in system settings.';
       });
       return;
     }
@@ -86,7 +85,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
         throw StateError('No camera found on this device.');
       }
       final CameraDescription camera = cameras.firstWhere(
-            (CameraDescription c) => c.lensDirection == CameraLensDirection.back,
+        (CameraDescription c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
 
@@ -115,7 +114,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       try {
         await controller.startImageStream(_onCameraImage);
       } catch (e) {
-        try { await controller.dispose(); } catch (_) {}
+        try {
+          await controller.dispose();
+        } catch (_) {}
         await _mlKit?.dispose();
         _mlKit = null;
         _camera = null;
@@ -135,7 +136,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       }
       setState(() => _initializing = false);
     } catch (e) {
-      try { await controller?.dispose(); } catch (_) {}
+      try {
+        await controller?.dispose();
+      } catch (_) {}
       await _mlKit?.dispose();
       _mlKit = null;
       _camera = null;
@@ -193,9 +196,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
 
       _pendingFeedback = next;
       final DateTime now = DateTime.now();
-      // Force an immediate banner update on a counted rep so the green flash
-      // isn't swallowed by the throttle.
-      final bool allowBannerUi = justCounted ||
+
+      final bool allowBannerUi =
+          justCounted ||
           _lastUiUpdate == null ||
           now.difference(_lastUiUpdate!) >= kPoseUiFeedbackThrottle;
 
@@ -213,7 +216,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     }
   }
 
-  /// Dispatches to the correct analyzer for the selected exercise.
   PoseFeedback _analyze(Pose pose) {
     switch (widget.exercise) {
       case PoseExerciseType.squat:
@@ -229,8 +231,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     }
   }
 
-  /// Updates the counter for the active exercise. Returns true when a rep was
-  /// just counted this frame (for timed plank, when the second count changed).
   bool _updateCounter(Pose pose) {
     switch (widget.exercise) {
       case PoseExerciseType.squat:
@@ -246,13 +246,7 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     }
   }
 
-  /// Combines the analyzer's form judgement with the rep counter into the
-  /// three-state feedback shown to the user:
-  /// - adjust (red): the analyzer found a form problem.
-  /// - almost (yellow): form is fine but the rep hasn't been counted yet.
-  /// - good (green): a rep was just counted (or, for plank, form is being held).
   PoseFeedback _deriveFeedback(PoseFeedback form, bool justCounted) {
-    // Plank is a timed hold: good form = green (accumulating), else adjust.
     if (_isTimed) {
       if (form.kind == PoseFeedbackKind.adjust) return form;
       return const PoseFeedback(
@@ -267,10 +261,6 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       _repFlashUntil = now.add(const Duration(milliseconds: 900));
     }
 
-    // Green flash has TOP priority: the instant a rep is counted, show green —
-    // even though the body (standing back up) may momentarily look like a form
-    // the analyzer would otherwise flag as "adjust". This keeps the green in
-    // sync with the count instead of lagging behind it.
     if (_repFlashUntil != null && now.isBefore(_repFlashUntil!)) {
       return const PoseFeedback(
         kind: PoseFeedbackKind.good,
@@ -279,10 +269,8 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
       );
     }
 
-    // Form problem → show the specific correction in red.
     if (form.kind == PoseFeedbackKind.adjust) return form;
 
-    // Form is fine but no rep has registered yet → yellow.
     return const PoseFeedback(
       kind: PoseFeedbackKind.almost,
       headlineEn: 'Almost',
@@ -315,53 +303,67 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     _mlKit = null;
   }
 
-  // ── Display helpers ────────────────────────────────────────────────────────
-
-  /// Returns the rep count OR held seconds for display in the badge.
   int get _displayCount {
     switch (widget.exercise) {
-      case PoseExerciseType.squat:       return _squatReps.count;
-      case PoseExerciseType.pushUp:      return _pushUpReps.count;
-      case PoseExerciseType.gluteBridge: return _gluteBridgeReps.count;
-      case PoseExerciseType.plank:       return _plankTimer.seconds;
-      case PoseExerciseType.crunch:      return _crunchReps.count;
+      case PoseExerciseType.squat:
+        return _squatReps.count;
+      case PoseExerciseType.pushUp:
+        return _pushUpReps.count;
+      case PoseExerciseType.gluteBridge:
+        return _gluteBridgeReps.count;
+      case PoseExerciseType.plank:
+        return _plankTimer.seconds;
+      case PoseExerciseType.crunch:
+        return _crunchReps.count;
     }
   }
 
-  /// True for plank — badge shows "s" suffix instead of "reps".
   bool get _isTimed => widget.exercise == PoseExerciseType.plank;
 
   String get _exerciseTitle {
     switch (widget.exercise) {
-      case PoseExerciseType.squat:       return 'Squat';
-      case PoseExerciseType.pushUp:      return 'Push-up';
-      case PoseExerciseType.gluteBridge: return 'Glute Bridge';
-      case PoseExerciseType.plank:       return 'Plank';
-      case PoseExerciseType.crunch:      return 'Crunch';
+      case PoseExerciseType.squat:
+        return 'Squat';
+      case PoseExerciseType.pushUp:
+        return 'Push-up';
+      case PoseExerciseType.gluteBridge:
+        return 'Glute Bridge';
+      case PoseExerciseType.plank:
+        return 'Plank';
+      case PoseExerciseType.crunch:
+        return 'Crunch';
     }
   }
 
   IconData get _exerciseIcon {
     switch (widget.exercise) {
-      case PoseExerciseType.squat:       return Icons.directions_walk;
-      case PoseExerciseType.pushUp:      return Icons.fitness_center;
-      case PoseExerciseType.gluteBridge: return Icons.airline_seat_flat;
-      case PoseExerciseType.plank:       return Icons.horizontal_rule;
-      case PoseExerciseType.crunch:      return Icons.airline_seat_recline_extra;
+      case PoseExerciseType.squat:
+        return Icons.directions_walk;
+      case PoseExerciseType.pushUp:
+        return Icons.fitness_center;
+      case PoseExerciseType.gluteBridge:
+        return Icons.airline_seat_flat;
+      case PoseExerciseType.plank:
+        return Icons.horizontal_rule;
+      case PoseExerciseType.crunch:
+        return Icons.airline_seat_recline_extra;
     }
   }
 
   Color get _accentColor {
     switch (widget.exercise) {
-      case PoseExerciseType.squat:       return const Color(0xffDF5089);
-      case PoseExerciseType.pushUp:      return const Color(0xff005F9C);
-      case PoseExerciseType.gluteBridge: return const Color(0xffC0622C);
-      case PoseExerciseType.plank:       return const Color(0xff1A7A5E);
-      case PoseExerciseType.crunch:      return const Color(0xff9C6B00);
+      case PoseExerciseType.squat:
+        return const Color(0xffDF5089);
+      case PoseExerciseType.pushUp:
+        return const Color(0xff005F9C);
+      case PoseExerciseType.gluteBridge:
+        return const Color(0xffC0622C);
+      case PoseExerciseType.plank:
+        return const Color(0xff1A7A5E);
+      case PoseExerciseType.crunch:
+        return const Color(0xff9C6B00);
     }
   }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +375,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
 
   Widget _body(BuildContext context) {
     if (_initializing) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
     }
     if (_error != null) {
       return Center(
@@ -390,7 +394,10 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
     final CameraController? cam = _camera;
     if (cam == null || !cam.value.isInitialized) {
       return const Center(
-        child: Text('Camera unavailable.', style: TextStyle(color: Colors.white70)),
+        child: Text(
+          'Camera unavailable.',
+          style: TextStyle(color: Colors.white70),
+        ),
       );
     }
 
@@ -413,7 +420,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
           ),
         ),
         Positioned(
-          top: 16, left: 16, right: 16,
+          top: 16,
+          left: 16,
+          right: 16,
           child: _ExerciseTitleChip(
             title: _exerciseTitle,
             icon: _exerciseIcon,
@@ -421,7 +430,9 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
           ),
         ),
         Positioned(
-          bottom: 120, left: 0, right: 0,
+          bottom: 120,
+          left: 0,
+          right: 0,
           child: Center(
             child: _RepCountBadge(
               count: _displayCount,
@@ -431,11 +442,12 @@ class _PoseCameraPageState extends State<PoseCameraPage> {
           ),
         ),
         Positioned(
-          left: 12, right: 12, bottom: 24,
+          left: 12,
+          right: 12,
+          bottom: 24,
           child: _FeedbackBanner(feedback: _feedback),
         ),
       ],
     );
   }
 }
-

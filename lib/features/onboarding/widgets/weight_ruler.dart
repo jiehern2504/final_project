@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// A horizontal ruler picker for weight. A fixed green pointer sits in the
-/// centre while the tick strip scrolls underneath; the centred tick is the
-/// selected value.
 class WeightRuler extends StatefulWidget {
   const WeightRuler({
     super.key,

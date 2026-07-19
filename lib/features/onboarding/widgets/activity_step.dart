@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// A single selectable activity level. [id] matches the Firestore
-/// `activityLevel` value; [factor] is only shown for context.
 class ActivityOption {
   const ActivityOption(this.id, this.label, this.description);
   final String id;
@@ -11,8 +9,6 @@ class ActivityOption {
   final String description;
 }
 
-/// The activity levels offered during onboarding. Ids match the values the
-/// rest of the app stores in `activityLevel`.
 const List<ActivityOption> kOnboardingActivities = <ActivityOption>[
   ActivityOption('sedentary', 'Sedentary', 'Rarely exercise'),
   ActivityOption('light', 'Light', '1-2 days / week'),
@@ -20,7 +16,6 @@ const List<ActivityOption> kOnboardingActivities = <ActivityOption>[
   ActivityOption('active', 'Active', '5+ days / week'),
 ];
 
-/// A vertical list of activity levels; the selected one is highlighted.
 class ActivityStep extends StatelessWidget {
   const ActivityStep({
     super.key,
@@ -46,8 +41,10 @@ class ActivityStep extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: selected
                       ? AppColors.primary.withValues(alpha: 0.12)

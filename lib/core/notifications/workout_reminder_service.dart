@@ -49,9 +49,10 @@ class WorkoutReminderService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  AndroidFlutterLocalNotificationsPlugin? get _android =>
-      _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+  AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
 
   bool _initialized = false;
   Future<void>? _initFuture;
@@ -111,8 +112,8 @@ class WorkoutReminderService {
   }
 
   Future<void> _handleLaunchFromNotification() async {
-    final NotificationAppLaunchDetails? launchDetails =
-        await _plugin.getNotificationAppLaunchDetails();
+    final NotificationAppLaunchDetails? launchDetails = await _plugin
+        .getNotificationAppLaunchDetails();
     if (launchDetails?.didNotificationLaunchApp != true) return;
     final NotificationResponse? response = launchDetails!.notificationResponse;
     if (response == null) return;
@@ -136,7 +137,8 @@ class WorkoutReminderService {
 
     List<ActiveNotification> active = <ActiveNotification>[];
     if (defaultTargetPlatform == TargetPlatform.android) {
-      active = await _android?.getActiveNotifications() ?? <ActiveNotification>[];
+      active =
+          await _android?.getActiveNotifications() ?? <ActiveNotification>[];
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       final IOSFlutterLocalNotificationsPlugin? ios = _plugin
           .resolvePlatformSpecificImplementation<
@@ -209,8 +211,8 @@ class WorkoutReminderService {
     if (!_initialized) await init();
     final PermissionStatus permissionStatus =
         await Permission.notification.status;
-    final List<PendingNotificationRequest> pending =
-        await _plugin.pendingNotificationRequests();
+    final List<PendingNotificationRequest> pending = await _plugin
+        .pendingNotificationRequests();
     final PendingNotificationRequest? mainReminder = pending
         .cast<PendingNotificationRequest?>()
         .firstWhere(
@@ -228,8 +230,8 @@ class WorkoutReminderService {
     if (android != null) {
       notificationsEnabled = await android.areNotificationsEnabled();
       canScheduleExactAlarms = await android.canScheduleExactNotifications();
-      final List<AndroidNotificationChannel>? channels =
-          await android.getNotificationChannels();
+      final List<AndroidNotificationChannel>? channels = await android
+          .getNotificationChannels();
       final AndroidNotificationChannel? reminderChannel = channels
           ?.cast<AndroidNotificationChannel?>()
           .firstWhere(
@@ -265,8 +267,6 @@ class WorkoutReminderService {
     );
   }
 
-  /// Mitch Koko scheduled-notifications flow:
-  /// https://www.youtube.com/watch?v=i98p9dJ4lhI
   Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -308,8 +308,7 @@ class WorkoutReminderService {
         androidScheduleMode: _kAndroidScheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents:
-            repeatDaily ? DateTimeComponents.time : null,
+        matchDateTimeComponents: repeatDaily ? DateTimeComponents.time : null,
         payload: payload,
       );
       debugPrint(
@@ -435,9 +434,7 @@ class WorkoutReminderService {
     await applyPrefs(prefs);
   }
 
-  Future<void> syncMissedReminders(
-    UserPreferencesRepository repository,
-  ) async {
+  Future<void> syncMissedReminders(UserPreferencesRepository repository) async {
     if (!_initialized) await init();
     final WorkoutReminderPrefs prefs = await repository.fetchWorkoutReminder();
     await NotificationInboxRepository.instance.syncMissedReminders(

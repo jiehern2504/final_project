@@ -1,7 +1,5 @@
 part of '../pose_camera_page.dart';
 
-// ── Sub-widgets (unchanged style from original) ────────────────────────────
-
 class _ExerciseTitleChip extends StatelessWidget {
   const _ExerciseTitleChip({
     required this.title,
@@ -49,7 +47,6 @@ class _RepCountBadge extends StatelessWidget {
   final int count;
   final Color color;
 
-  /// When true, appends "s" (seconds) instead of showing a bare number.
   final bool isTimed;
 
   @override
@@ -71,30 +68,30 @@ class _RepCountBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: isTimed
           ? Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            '$count',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Text(
-            's',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-        ],
-      )
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  's',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            )
           : Text(
-        '$count',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+              '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
     );
   }
 }

@@ -11,18 +11,12 @@ import 'widgets/number_wheel.dart';
 import 'widgets/onboarding_scaffold.dart';
 import 'widgets/weight_ruler.dart';
 
-/// First-run onboarding: an intro carousel followed by a profile wizard
-/// (gender → age → weight → height → activity). On finish it writes the
-/// physical stats to `users/{uid}`; [AuthPage] then routes on to the home page.
-///
-/// This is rendered by `AuthPage` while the signed-in user's profile stats are
-/// still empty, so it also resumes correctly if the app is closed mid-way.
 class OnboardingFlowPage extends StatefulWidget {
   const OnboardingFlowPage({super.key});
 
   static const int _introCount = 3;
   static const int _wizardSteps = 5;
-  static const int _lastStep = _introCount + _wizardSteps - 1; // 7
+  static const int _lastStep = _introCount + _wizardSteps - 1;
 
   @override
   State<OnboardingFlowPage> createState() => _OnboardingFlowPageState();
@@ -57,22 +51,20 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
     if (uid == null) return;
     setState(() => _saving = true);
     try {
-      await FirebaseFirestore.instance.collection('users').doc(uid).set(
-        <String, dynamic>{
-          'gender': _gender,
-          'age': _age,
-          'height': _height,
-          'weight': _weight,
-          'activityLevel': _activity,
-          // Anchor for yearly age auto-increment (see AgeUpdater).
-          'ageSetAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      // Seed the Home summary chart with the starting weight.
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(<String, dynamic>{
+            'gender': _gender,
+            'age': _age,
+            'height': _height,
+            'weight': _weight,
+            'activityLevel': _activity,
+
+            'ageSetAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
       await SummaryRepository().logWeight(_weight.toDouble());
-      // AuthPage watches this document and will route to HomePage now that the
-      // stats are filled — no manual navigation needed here.
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);

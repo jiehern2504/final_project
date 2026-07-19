@@ -38,9 +38,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
-    WorkoutReminderService.instance
-        .syncDeliveredNotifications()
-        .catchError((_) {});
+    WorkoutReminderService.instance.syncDeliveredNotifications().catchError(
+      (_) {},
+    );
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     WorkoutReminderService.instance

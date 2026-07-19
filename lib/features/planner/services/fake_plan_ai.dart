@@ -1,20 +1,10 @@
-/// Dev/testing helpers for AI plan generation.
-///
-/// When the app is launched with `--dart-define=FAKE_AI_PLAN=true`, plan
-/// generation uses [fakePlanJson] instead of calling Gemini — so the full
-/// flow (generate → show → adopt) can be verified for free. In normal /
-/// production builds [kUseFakeAiPlan] is `false`, so this has no effect.
 library;
 
 const bool kUseFakeAiPlan = bool.fromEnvironment('FAKE_AI_PLAN');
 
-/// A canned, catalogue-valid plan JSON returned by the fake AI caller.
-/// Every `exerciseId` here exists in the tutorial catalogue, so nothing gets
-/// filtered out during parsing.
 Future<String> fakePlanJson(String prompt) async {
   await Future<void>.delayed(const Duration(milliseconds: 600));
-  // The multi-week prompt carries a MULTIWEEK_TASK marker — return a small
-  // 3-week series (2 days each) so the whole unlock flow can be tested fast.
+
   if (prompt.contains('MULTIWEEK_TASK')) {
     return _fakeSeriesJson;
   }
@@ -54,8 +44,6 @@ Future<String> fakePlanJson(String prompt) async {
 ''';
 }
 
-/// A canned 3-week progressive series JSON for offline testing of the
-/// multi-week unlock flow. 2 days per week keeps completion fast during tests.
 const String _fakeSeriesJson = '''
 {
   "title": "Progressive Home Plan (Demo)",

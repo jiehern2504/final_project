@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// The little gym-bear mascot, drawn with a [CustomPainter] so it needs no
-/// image asset.
-///
-/// NOTE FOR LATER: to swap in your own artwork, replace the [CustomPaint]
-/// below with `Image.asset('assets/bear.png', width: size, height: size)`
-/// (and add the file to `pubspec.yaml` assets). The rest of the onboarding
-/// code just uses `BearMascot(size: ...)`, so nothing else needs to change.
 class BearMascot extends StatelessWidget {
   const BearMascot({super.key, this.size = 130});
 
@@ -31,7 +24,6 @@ class _BearPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Everything is authored in a 120x120 space, then scaled to fit.
     final double s = size.width / 120.0;
     Offset p(double x, double y) => Offset(x * s, y * s);
     double r(double v) => v * s;
@@ -45,14 +37,12 @@ class _BearPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = r(3);
 
-    // Ears.
     for (final double cx in <double>[34, 86]) {
       canvas.drawCircle(p(cx, 34), r(15), fillWhite);
       canvas.drawCircle(p(cx, 34), r(15), stroke);
       canvas.drawCircle(p(cx, 34), r(7), fillOrange);
     }
 
-    // Head / body.
     final Rect body = Rect.fromCenter(
       center: p(60, 70),
       width: r(82),
@@ -61,18 +51,15 @@ class _BearPainter extends CustomPainter {
     canvas.drawOval(body, fillWhite);
     canvas.drawOval(body, stroke);
 
-    // Headband.
     final RRect band = RRect.fromRectAndRadius(
       Rect.fromLTWH(r(24), r(48), r(72), r(13)),
       Radius.circular(r(6)),
     );
     canvas.drawRRect(band, fillCoral);
 
-    // Eyes.
     canvas.drawCircle(p(49, 72), r(3.5), fillDark);
     canvas.drawCircle(p(71, 72), r(3.5), fillDark);
 
-    // Muzzle + nose.
     canvas.drawOval(
       Rect.fromCenter(center: p(60, 86), width: r(34), height: r(24)),
       fillOrange,

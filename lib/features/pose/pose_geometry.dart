@@ -3,12 +3,7 @@ import 'dart:ui';
 
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
-/// Internal angle at [b] for triangle [a]–[b]–[c] (degrees).
-double angleAtPoseLandmarks(
-  PoseLandmark a,
-  PoseLandmark b,
-  PoseLandmark c,
-) {
+double angleAtPoseLandmarks(PoseLandmark a, PoseLandmark b, PoseLandmark c) {
   final Offset ba = Offset(a.x - b.x, a.y - b.y);
   final Offset bc = Offset(c.x - b.x, c.y - b.y);
   final double dot = ba.dx * bc.dx + ba.dy * bc.dy;

@@ -21,8 +21,6 @@ class ExerciseDetailPage extends StatefulWidget {
 }
 
 class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
-  // Which video is currently playing: 0 = front, 1 = side, null = none.
-  // Only one plays at a time (tapping one pauses the other).
   int? _playingSlot;
 
   @override
@@ -32,10 +30,7 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(exercise.title),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(exercise.title), centerTitle: true),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -44,18 +39,15 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                 Expanded(
                   child: _AngleVideoSlot(
                     label: ExerciseVideoAngle.front.label,
-                    assetPath: 'assets/tutorial_videos/${exercise.id}_front.mp4',
+                    assetPath:
+                        'assets/tutorial_videos/${exercise.id}_front.mp4',
                     clipTopRadius: true,
                     forcePaused: _playingSlot != null && _playingSlot != 0,
                     onPlayingChanged: (playing) =>
                         setState(() => _playingSlot = playing ? 0 : null),
                   ),
                 ),
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Colors.grey.shade200,
-                ),
+                Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
                 Expanded(
                   child: _AngleVideoSlot(
                     label: ExerciseVideoAngle.side.label,
@@ -82,8 +74,9 @@ class _ExerciseDetailPageState extends State<ExerciseDetailPage> {
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: widget.primaryColor
-                                    .withValues(alpha: 0.12),
+                                color: widget.primaryColor.withValues(
+                                  alpha: 0.12,
+                                ),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
@@ -170,7 +163,9 @@ class _AngleVideoSlot extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   color: Colors.white,
-                  shadows: const [Shadow(blurRadius: 4, color: Color(0x99000000))],
+                  shadows: const [
+                    Shadow(blurRadius: 4, color: Color(0x99000000)),
+                  ],
                 ),
               ),
             ),

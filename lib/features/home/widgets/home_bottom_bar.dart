@@ -48,8 +48,7 @@ class _HomeBottomBar extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
-                    builder: (BuildContext context) =>
-                        const AchievementPage(),
+                    builder: (BuildContext context) => const AchievementPage(),
                   ),
                 );
               },
@@ -97,7 +96,8 @@ class _HomeBottomBar extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push<void>(
                   MaterialPageRoute<void>(
-                    builder: (BuildContext context) => const MuscleTutorialPage(),
+                    builder: (BuildContext context) =>
+                        const MuscleTutorialPage(),
                   ),
                 );
               },
@@ -154,9 +154,9 @@ class _BottomNavItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

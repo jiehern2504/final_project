@@ -1,6 +1,5 @@
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
-/// Owns ML Kit [PoseDetector] lifecycle (stream mode, base model).
 class PoseMlKitController {
   PoseMlKitController() {
     _detector = PoseDetector(

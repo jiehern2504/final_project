@@ -1,8 +1,3 @@
-/// A recommended workout video hosted on YouTube.
-///
-/// [id] is the YouTube video id — the part after `watch?v=` or `youtu.be/`
-/// (e.g. `https://youtu.be/dQw4w9WgXcQ` → `dQw4w9WgXcQ`). Swap the placeholder
-/// entries in [kRecommendedVideos] for real workout videos.
 class RecommendedVideo {
   const RecommendedVideo({
     required this.id,
@@ -16,9 +11,6 @@ class RecommendedVideo {
   final String channel;
   final String duration;
 
-  /// The bare YouTube video id. [id] may be pasted as a FULL URL
-  /// (`watch?v=…`, `youtu.be/…`, `shorts/…`, `embed/…`) or already be a bare
-  /// id — this normalises it either way, so you can just paste the link.
   String get videoId {
     final String raw = id.trim();
     if (RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(raw)) return raw;
@@ -35,7 +27,7 @@ class RecommendedVideo {
         return uri.pathSegments[1];
       }
     }
-    // Last resort: pull the id out of any string (even a full <iframe> embed).
+
     final Match? m = RegExp(
       r'(?:v=|/embed/|youtu\.be/|/shorts/)([A-Za-z0-9_-]{11})',
     ).firstMatch(raw);
@@ -43,13 +35,10 @@ class RecommendedVideo {
     return raw;
   }
 
-  /// YouTube-provided thumbnail image for this video.
   String get thumbnailUrl =>
       'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
 }
 
-/// PLACEHOLDER list. These ids point to stable public videos so the thumbnails
-/// and playback work while testing — replace them with real workout videos.
 const List<RecommendedVideo> kRecommendedVideos = <RecommendedVideo>[
   RecommendedVideo(
     id: 'https://www.youtube.com/watch?v=uep2HH5MW7k',
@@ -141,7 +130,7 @@ const List<RecommendedVideo> kRecommendedVideos = <RecommendedVideo>[
     channel: 'Emi Wong',
     duration: '10:55',
   ),
-  RecommendedVideo( //haven
+  RecommendedVideo(
     id: 'https://www.youtube.com/watch?v=841gJUczmzg',
     title: 'Killer LEG Workout at Home (No Equipment)',
     channel: 'NEXT Workout',
@@ -149,9 +138,9 @@ const List<RecommendedVideo> kRecommendedVideos = <RecommendedVideo>[
   ),
   RecommendedVideo(
     id: 'https://www.youtube.com/watch?v=XYp7GQicd0c',
-    title: '10min Slim Arm Workout |🔥 Burn Flabby Arm Fat | All Seated & No Equipment',
+    title:
+        '10min Slim Arm Workout |🔥 Burn Flabby Arm Fat | All Seated & No Equipment',
     channel: 'hailey C.',
     duration: '10:29',
   ),
-
 ];

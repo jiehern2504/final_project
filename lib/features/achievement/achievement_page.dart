@@ -7,10 +7,11 @@ import '../../core/theme/app_colors.dart';
 const Color _kPrimaryColor = AppColors.primary;
 const Color _kSecondaryColor = AppColors.secondary;
 
-/// Aggregated achievement inputs: lifetime completed workout days (never resets,
-/// even across weeks/plans) + whether a full 4-week plan was ever finished.
 class _AchievementData {
-  const _AchievementData({required this.totalWorkouts, required this.monthDone});
+  const _AchievementData({
+    required this.totalWorkouts,
+    required this.monthDone,
+  });
   final int totalWorkouts;
   final bool monthDone;
 }
@@ -52,41 +53,44 @@ class _AchievementPageState extends State<AchievementPage> {
       body: SafeArea(
         child: FutureBuilder<_AchievementData>(
           future: _future,
-          builder: (BuildContext context, AsyncSnapshot<_AchievementData> snap) {
-            if (snap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final _AchievementData data =
-                snap.data ?? const _AchievementData(totalWorkouts: 0, monthDone: false);
-            final List<_Badge> badges =
-                _badgesFor(data.totalWorkouts, data.monthDone);
-            final int unlocked = badges.where((b) => b.unlocked).length;
+          builder:
+              (BuildContext context, AsyncSnapshot<_AchievementData> snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final _AchievementData data =
+                    snap.data ??
+                    const _AchievementData(totalWorkouts: 0, monthDone: false);
+                final List<_Badge> badges = _badgesFor(
+                  data.totalWorkouts,
+                  data.monthDone,
+                );
+                final int unlocked = badges.where((b) => b.unlocked).length;
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-              children: [
-                _TotalCard(totalWorkouts: data.totalWorkouts),
-                const SizedBox(height: 20),
-                Row(
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
                   children: [
-                    Text(
-                      'Badges',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                    _TotalCard(totalWorkouts: data.totalWorkouts),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Text(
+                          'Badges',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$unlocked / ${badges.length} unlocked',
+                          style: const TextStyle(color: Colors.black54),
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    Text(
-                      '$unlocked / ${badges.length} unlocked',
-                      style: const TextStyle(color: Colors.black54),
-                    ),
+                    const SizedBox(height: 12),
+                    ...badges.map((_Badge badge) => _BadgeTile(badge: badge)),
                   ],
-                ),
-                const SizedBox(height: 12),
-                ...badges.map((_Badge badge) => _BadgeTile(badge: badge)),
-              ],
-            );
-          },
+                );
+              },
         ),
       ),
     );
@@ -179,16 +183,16 @@ class _TotalCard extends StatelessWidget {
                   Text(
                     '$totalWorkouts workouts completed',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Total training days you\'ve finished — keeps growing across '
                     'every plan and every month.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.black54),
                   ),
                 ],
               ),

@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -176,10 +176,10 @@ class _ProfilePageState extends State<ProfilePage> {
         'weight': weight,
         'gender': _selectedGender,
         'activityLevel': _selectedActivity,
-        // Reset the anchor for yearly age auto-increment (see AgeUpdater).
+
         'ageSetAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      // Log the weight so the Home summary chart has a data point.
+
       await SummaryRepository().logWeight(weight);
       _showSuccess('Profile saved. The new changes will show on next login');
     } on FirebaseException catch (e) {

@@ -111,9 +111,9 @@ class _ShortcutCard extends StatelessWidget {
                 label,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: textColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

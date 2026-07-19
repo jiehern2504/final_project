@@ -48,9 +48,9 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
         (TutorialExercise e) => e.title.toLowerCase().contains(lower),
       );
     }
-    return list.toList()
-      ..sort((TutorialExercise a, TutorialExercise b) =>
-          a.title.compareTo(b.title));
+    return list.toList()..sort(
+      (TutorialExercise a, TutorialExercise b) => a.title.compareTo(b.title),
+    );
   }
 
   void _selectExercise(TutorialExercise exercise) {
@@ -87,9 +87,9 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text(
               'Add exercise',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           Padding(

@@ -7,7 +7,6 @@ import 'pose_feedback.dart';
 bool _usable(PoseLandmark? l) =>
     l != null && l.likelihood >= kMinLandmarkLikelihood;
 
-/// Key angles for a plank hold.
 class PlankMetrics {
   const PlankMetrics({
     required this.bodyAngleDeg,
@@ -15,35 +14,29 @@ class PlankMetrics {
     required this.hipsPiking,
   });
 
-  /// Shoulder–hip–ankle angle. Should stay close to 180° (flat body line).
   final double bodyAngleDeg;
 
-  /// Shoulder–elbow–wrist angle. Forearm plank ≈ 90°; high plank ≈ 160–180°.
   final double elbowAngleDeg;
 
-  /// True when the hip is ABOVE the shoulder→ankle line (butt piked up);
-  /// false when it is below (hips sagging). The [bodyAngleDeg] alone can't tell
-  /// these apart because it's an unsigned angle (always ≤ 180°).
   final bool hipsPiking;
 }
 
-/// Picks the side with better landmark confidence.
 PlankMetrics? computePlankMetrics(Pose pose) {
   final PlankMetrics? left = _metricsForSide(
     pose: pose,
     shoulderT: PoseLandmarkType.leftShoulder,
-    elbowT:    PoseLandmarkType.leftElbow,
-    wristT:    PoseLandmarkType.leftWrist,
-    hipT:      PoseLandmarkType.leftHip,
-    ankleT:    PoseLandmarkType.leftAnkle,
+    elbowT: PoseLandmarkType.leftElbow,
+    wristT: PoseLandmarkType.leftWrist,
+    hipT: PoseLandmarkType.leftHip,
+    ankleT: PoseLandmarkType.leftAnkle,
   );
   final PlankMetrics? right = _metricsForSide(
     pose: pose,
     shoulderT: PoseLandmarkType.rightShoulder,
-    elbowT:    PoseLandmarkType.rightElbow,
-    wristT:    PoseLandmarkType.rightWrist,
-    hipT:      PoseLandmarkType.rightHip,
-    ankleT:    PoseLandmarkType.rightAnkle,
+    elbowT: PoseLandmarkType.rightElbow,
+    wristT: PoseLandmarkType.rightWrist,
+    hipT: PoseLandmarkType.rightHip,
+    ankleT: PoseLandmarkType.rightAnkle,
   );
 
   if (left == null && right == null) return null;
@@ -64,21 +57,22 @@ PlankMetrics? _metricsForSide({
   required PoseLandmarkType ankleT,
 }) {
   final PoseLandmark? shoulder = pose.landmarks[shoulderT];
-  final PoseLandmark? elbow    = pose.landmarks[elbowT];
-  final PoseLandmark? wrist    = pose.landmarks[wristT];
-  final PoseLandmark? hip      = pose.landmarks[hipT];
-  final PoseLandmark? ankle    = pose.landmarks[ankleT];
+  final PoseLandmark? elbow = pose.landmarks[elbowT];
+  final PoseLandmark? wrist = pose.landmarks[wristT];
+  final PoseLandmark? hip = pose.landmarks[hipT];
+  final PoseLandmark? ankle = pose.landmarks[ankleT];
 
-  if (!_usable(shoulder) || !_usable(elbow) || !_usable(wrist) ||
-      !_usable(hip) || !_usable(ankle)) {
+  if (!_usable(shoulder) ||
+      !_usable(elbow) ||
+      !_usable(wrist) ||
+      !_usable(hip) ||
+      !_usable(ankle)) {
     return null;
   }
 
-  final double bodyAngle  = angleAtPoseLandmarks(shoulder!, hip!, ankle!);
+  final double bodyAngle = angleAtPoseLandmarks(shoulder!, hip!, ankle!);
   final double elbowAngle = angleAtPoseLandmarks(shoulder, elbow!, wrist!);
 
-  // Is the hip above or below the shoulder→ankle line? (y grows downward, so a
-  // smaller y = higher on screen = piked up.)
   final double denom = ankle.x - shoulder.x;
   final double lineY = denom.abs() < 1e-6
       ? (shoulder.y + ankle.y) / 2
@@ -93,23 +87,20 @@ PlankMetrics? _metricsForSide({
 }
 
 double _sideConfidence(Pose pose, {required bool isLeft}) {
-  final PoseLandmark? s = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftShoulder
-      : PoseLandmarkType.rightShoulder];
-  final PoseLandmark? h = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftHip
-      : PoseLandmarkType.rightHip];
-  final PoseLandmark? a = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftAnkle
-      : PoseLandmarkType.rightAnkle];
+  final PoseLandmark? s =
+      pose.landmarks[isLeft
+          ? PoseLandmarkType.leftShoulder
+          : PoseLandmarkType.rightShoulder];
+  final PoseLandmark? h = pose
+      .landmarks[isLeft ? PoseLandmarkType.leftHip : PoseLandmarkType.rightHip];
+  final PoseLandmark? a =
+      pose.landmarks[isLeft
+          ? PoseLandmarkType.leftAnkle
+          : PoseLandmarkType.rightAnkle];
   if (s == null || h == null || a == null) return 0;
   return (s.likelihood + h.likelihood + a.likelihood) / 3;
 }
 
-/// Returns [PoseFeedback] for a plank hold.
-///
-/// Plank is a timed exercise — this only evaluates FORM, not reps.
-/// The rep counter for plank accumulates seconds held in good form.
 PoseFeedback analyzePlank(Pose pose) {
   final PlankMetrics? m = computePlankMetrics(pose);
   if (m == null) return PoseFeedback.noBody;

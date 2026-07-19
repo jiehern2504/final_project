@@ -7,28 +7,24 @@ import 'pose_feedback.dart';
 bool _usable(PoseLandmark? l) =>
     l != null && l.likelihood >= kMinLandmarkLikelihood;
 
-/// Key angles for a crunch.
 class CrunchMetrics {
   const CrunchMetrics({required this.hipAngleDeg});
 
-  /// Shoulder–hip–knee angle.
-  /// Small angle = curled up; large angle = lying flat.
   final double hipAngleDeg;
 }
 
-/// Picks the side with better landmark confidence.
 CrunchMetrics? computeCrunchMetrics(Pose pose) {
   final CrunchMetrics? left = _metricsForSide(
     pose: pose,
     shoulderT: PoseLandmarkType.leftShoulder,
-    hipT:      PoseLandmarkType.leftHip,
-    kneeT:     PoseLandmarkType.leftKnee,
+    hipT: PoseLandmarkType.leftHip,
+    kneeT: PoseLandmarkType.leftKnee,
   );
   final CrunchMetrics? right = _metricsForSide(
     pose: pose,
     shoulderT: PoseLandmarkType.rightShoulder,
-    hipT:      PoseLandmarkType.rightHip,
-    kneeT:     PoseLandmarkType.rightKnee,
+    hipT: PoseLandmarkType.rightHip,
+    kneeT: PoseLandmarkType.rightKnee,
   );
 
   if (left == null && right == null) return null;
@@ -47,8 +43,8 @@ CrunchMetrics? _metricsForSide({
   required PoseLandmarkType kneeT,
 }) {
   final PoseLandmark? shoulder = pose.landmarks[shoulderT];
-  final PoseLandmark? hip      = pose.landmarks[hipT];
-  final PoseLandmark? knee     = pose.landmarks[kneeT];
+  final PoseLandmark? hip = pose.landmarks[hipT];
+  final PoseLandmark? knee = pose.landmarks[kneeT];
 
   if (!_usable(shoulder) || !_usable(hip) || !_usable(knee)) return null;
 
@@ -57,20 +53,20 @@ CrunchMetrics? _metricsForSide({
 }
 
 double _sideConfidence(Pose pose, {required bool isLeft}) {
-  final PoseLandmark? s = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftShoulder
-      : PoseLandmarkType.rightShoulder];
-  final PoseLandmark? h = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftHip
-      : PoseLandmarkType.rightHip];
-  final PoseLandmark? k = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftKnee
-      : PoseLandmarkType.rightKnee];
+  final PoseLandmark? s =
+      pose.landmarks[isLeft
+          ? PoseLandmarkType.leftShoulder
+          : PoseLandmarkType.rightShoulder];
+  final PoseLandmark? h = pose
+      .landmarks[isLeft ? PoseLandmarkType.leftHip : PoseLandmarkType.rightHip];
+  final PoseLandmark? k =
+      pose.landmarks[isLeft
+          ? PoseLandmarkType.leftKnee
+          : PoseLandmarkType.rightKnee];
   if (s == null || h == null || k == null) return 0;
   return (s.likelihood + h.likelihood + k.likelihood) / 3;
 }
 
-/// Returns [PoseFeedback] describing crunch form.
 PoseFeedback analyzeCrunch(Pose pose) {
   final CrunchMetrics? m = computeCrunchMetrics(pose);
   if (m == null) return PoseFeedback.noBody;

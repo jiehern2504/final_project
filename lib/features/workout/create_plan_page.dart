@@ -17,15 +17,12 @@ const Color _kTextColor = AppColors.text;
 
 enum _CreateStep { gate, builder, workoutTime }
 
-/// How long the manual plan runs.
 enum _PlanLength { oneWeek, oneMonth }
 
-/// When the plan is a month, how the 4 weeks are built.
 enum _MonthMode { repeatWeek, customWeeks }
 
 class _BuilderDay {
-  _BuilderDay({required this.label})
-      : exercises = <PlanExercise>[];
+  _BuilderDay({required this.label}) : exercises = <PlanExercise>[];
 
   final String label;
   final List<PlanExercise> exercises;
@@ -51,11 +48,10 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   late final UserPreferencesRepository _prefsRepository;
 
   _CreateStep _step = _CreateStep.gate;
-  final TextEditingController _titleController =
-      TextEditingController(text: 'My workout plan');
+  final TextEditingController _titleController = TextEditingController(
+    text: 'My workout plan',
+  );
 
-  /// Days grouped by week. Week 1 always exists; extra weeks are only used in
-  /// the "1 month · custom weeks" mode.
   final List<List<_BuilderDay>> _weeks = <List<_BuilderDay>>[
     <_BuilderDay>[_BuilderDay(label: 'Day 1')],
   ];
@@ -64,7 +60,6 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   _MonthMode _monthMode = _MonthMode.repeatWeek;
   bool _saving = false;
 
-  /// True when the user is hand-building 4 different weeks.
   bool get _isCustomWeeks =>
       _length == _PlanLength.oneMonth && _monthMode == _MonthMode.customWeeks;
 
@@ -85,9 +80,8 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   void _chooseAiHelp() {
     Navigator.of(context).pushReplacement<void, void>(
       MaterialPageRoute<void>(
-        builder: (BuildContext context) => const AiChatPage(
-          initialMessage: 'help me to build workout plan',
-        ),
+        builder: (BuildContext context) =>
+            const AiChatPage(initialMessage: 'help me to build workout plan'),
       ),
     );
   }
@@ -96,16 +90,12 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     setState(() => _step = _CreateStep.builder);
   }
 
-  /// A week may have at most 7 days.
   static const int _kMaxDays = 7;
 
-  /// A week must have at least 3 days to be worth training.
   static const int _kMinDays = 3;
 
-  /// A one-month plan is 4 weeks.
   static const int _kCustomWeeks = 4;
 
-  /// Switches the plan length, padding [_weeks] to 4 when a month is chosen.
   void _setLength(_PlanLength length) {
     setState(() {
       _length = length;
@@ -129,17 +119,17 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     final List<_BuilderDay> days = _weeks[weekIndex];
     if (days.length <= 1) return;
     setState(() {
-      final List<List<PlanExercise>> exerciseLists = days
-          .map((d) => List<PlanExercise>.from(d.exercises))
-          .toList()
-        ..removeAt(dayIndex);
+      final List<List<PlanExercise>> exerciseLists =
+          days.map((d) => List<PlanExercise>.from(d.exercises)).toList()
+            ..removeAt(dayIndex);
       days
         ..clear()
         ..addAll(
           List<_BuilderDay>.generate(
             exerciseLists.length,
-            (int i) => _BuilderDay(label: 'Day ${i + 1}')
-              ..exercises.addAll(exerciseLists[i]),
+            (int i) =>
+                _BuilderDay(label: 'Day ${i + 1}')
+                  ..exercises.addAll(exerciseLists[i]),
           ),
         );
     });
@@ -148,8 +138,7 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   Future<void> _addExercise(int weekIndex, int dayIndex) async {
     final PlanExercise? picked = await showExercisePickerSheet(context);
     if (picked == null || !mounted) return;
-    // Normalise to a fixed "N sets × M reps" format so only the numbers can be
-    // edited later (never the words).
+
     final (int sets, int reps) = _parseSetsReps(picked.setsLabel);
     setState(() {
       _weeks[weekIndex][dayIndex].exercises.add(
@@ -168,21 +157,17 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     );
   }
 
-  /// Formats the fixed label — the words "sets" and "reps" are never editable.
   String _formatSetsReps(int sets, int reps) => '$sets sets × $reps reps';
 
-  /// Extracts the sets/reps numbers from any existing label (defaults 3 × 12).
   (int, int) _parseSetsReps(String label) {
-    final List<int> nums = RegExp(r'\d+')
-        .allMatches(label)
-        .map((RegExpMatch m) => int.parse(m.group(0)!))
-        .toList();
+    final List<int> nums = RegExp(
+      r'\d+',
+    ).allMatches(label).map((RegExpMatch m) => int.parse(m.group(0)!)).toList();
     final int sets = (nums.isNotEmpty ? nums.first : 3).clamp(1, 10);
     final int reps = (nums.length >= 2 ? nums.last : 12).clamp(1, 100);
     return (sets, reps);
   }
 
-  /// Lets the user change ONLY the sets and reps numbers via steppers.
   Future<void> _editSetsLabel(
     int weekIndex,
     int dayIndex,
@@ -244,13 +229,14 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     });
   }
 
-  /// The weeks whose content the user actually authored. In "repeat" mode only
-  /// Week 1 is authored (it gets copied ×4 on save); in "custom" mode all 4.
-  List<List<_BuilderDay>> get _sourceWeeks =>
-      _isCustomWeeks ? _weeks.sublist(0, _kCustomWeeks) : <List<_BuilderDay>>[_weeks[0]];
+  List<List<_BuilderDay>> get _sourceWeeks => _isCustomWeeks
+      ? _weeks.sublist(0, _kCustomWeeks)
+      : <List<_BuilderDay>>[_weeks[0]];
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _goToWorkoutTimeStep() {
@@ -283,7 +269,6 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     setState(() => _step = _CreateStep.workoutTime);
   }
 
-  /// Converts one authored week into savable [PlanDay]s (days numbered 1..N).
   List<PlanDay> _toPlanDays(List<_BuilderDay> week) {
     return List<PlanDay>.generate(week.length, (int i) {
       final _BuilderDay d = week[i];
@@ -301,10 +286,10 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
   Future<void> _savePlan() async {
     final WorkoutTimePickerResult? timeResult =
         await showWorkoutTimePickerSheet(
-      context,
-      initialReminderEnabled: true,
-      requireTimeWhenEnabled: true,
-    );
+          context,
+          initialReminderEnabled: true,
+          requireTimeWhenEnabled: true,
+        );
     if (timeResult == null || !mounted) return;
 
     setState(() => _saving = true);
@@ -319,8 +304,10 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
         final List<List<PlanDay>> weekDays;
         if (_monthMode == _MonthMode.repeatWeek) {
           final List<PlanDay> oneWeek = _toPlanDays(_weeks[0]);
-          weekDays =
-              List<List<PlanDay>>.generate(_kCustomWeeks, (_) => oneWeek);
+          weekDays = List<List<PlanDay>>.generate(
+            _kCustomWeeks,
+            (_) => oneWeek,
+          );
         } else {
           weekDays = List<List<PlanDay>>.generate(
             _kCustomWeeks,
@@ -360,9 +347,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Plan saved as draft.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Plan saved as draft.')));
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
@@ -379,8 +366,6 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Only the first step may leave the page. On later steps, "back" steps
-    // backwards through the flow so the plan the user built is not lost.
     return PopScope(
       canPop: _step == _CreateStep.gate,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -395,10 +380,7 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       },
       child: Scaffold(
         backgroundColor: _kBackgroundColor,
-        appBar: AppBar(
-          title: Text(_appBarTitle),
-          centerTitle: true,
-        ),
+        appBar: AppBar(title: Text(_appBarTitle), centerTitle: true),
         body: SafeArea(
           child: switch (_step) {
             _CreateStep.gate => _buildGate(),
@@ -426,10 +408,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
         children: [
           Text(
             'Would you like AI to help build your plan, or choose exercises yourself from our tutorial library?',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: _kTextColor,
-                  height: 1.4,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: _kTextColor, height: 1.4),
           ),
           const Spacer(),
           FilledButton.icon(
@@ -502,10 +483,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       children: [
         Text(
           'Plan length',
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         SegmentedButton<_PlanLength>(
@@ -534,10 +514,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
       children: [
         Text(
           'How to fill the month',
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         SegmentedButton<_MonthMode>(
@@ -570,10 +549,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
           Expanded(
             child: Text(
               'This week repeats for 4 weeks. Finish each week to unlock the next.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.black54),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
             ),
           ),
         ],
@@ -581,9 +559,11 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     );
   }
 
-  /// Renders one week: a header (with "Add day") plus its day cards. When
-  /// [grouped] is true the block is boxed so the 4 custom weeks are distinct.
-  Widget _weekBlock(int weekIndex, {required String header, bool grouped = false}) {
+  Widget _weekBlock(
+    int weekIndex, {
+    required String header,
+    bool grouped = false,
+  }) {
     final List<_BuilderDay> days = _weeks[weekIndex];
     final Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,14 +572,15 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
           children: [
             Text(
               header,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             TextButton.icon(
-              onPressed: days.length >= _kMaxDays ? null : () => _addDay(weekIndex),
+              onPressed: days.length >= _kMaxDays
+                  ? null
+                  : () => _addDay(weekIndex),
               icon: const Icon(Icons.add),
               label: const Text('Add day'),
             ),
@@ -640,10 +621,9 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
                 Expanded(
                   child: Text(
                     day.label,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const Text(
@@ -718,16 +698,16 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
         children: [
           Text(
             'When do you usually work out?',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           Text(
             'Set a daily reminder time, or turn reminders off. You can change this later on your Workout Plan page.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
           const Spacer(),
           FilledButton(
@@ -752,4 +732,3 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
     );
   }
 }
-

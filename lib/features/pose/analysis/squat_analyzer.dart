@@ -7,7 +7,6 @@ import '../pose_constants.dart';
 import '../pose_geometry.dart';
 import 'pose_feedback.dart';
 
-/// Knee internal angle (hip–knee–ankle) and torso lean vs vertical (degrees).
 class SquatMetrics {
   const SquatMetrics({
     required this.kneeAngleDeg,
@@ -20,8 +19,8 @@ class SquatMetrics {
 
 double _angleFromVerticalDeg(Offset v) {
   const Offset up = Offset(0, -1);
-  final double dot = (v.dx * up.dx + v.dy * up.dy) /
-      (v.distance * up.distance + 1e-9);
+  final double dot =
+      (v.dx * up.dx + v.dy * up.dy) / (v.distance * up.distance + 1e-9);
   return math.acos(dot.clamp(-1.0, 1.0)) * 180 / math.pi;
 }
 
@@ -79,8 +78,7 @@ SquatMetrics? computeSquatMetrics(Pose pose) {
 }
 
 double _sideScore(Pose pose, {required bool isLeft}) {
-  double minLike(double a, double b, double c) =>
-      math.min(a, math.min(b, c));
+  double minLike(double a, double b, double c) => math.min(a, math.min(b, c));
 
   if (isLeft) {
     final PoseLandmark? h = pose.landmarks[PoseLandmarkType.leftHip];

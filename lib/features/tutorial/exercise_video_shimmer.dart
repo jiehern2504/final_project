@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Lightweight pulse placeholder while a tutorial video loads.
 class ExerciseVideoShimmer extends StatefulWidget {
   const ExerciseVideoShimmer({
     super.key,
@@ -27,9 +26,10 @@ class _ExerciseVideoShimmerState extends State<ExerciseVideoShimmer>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.35, end: 0.55).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0.35,
+      end: 0.55,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

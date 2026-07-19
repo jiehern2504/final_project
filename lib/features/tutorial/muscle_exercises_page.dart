@@ -18,10 +18,8 @@ class MuscleExercisesPage extends StatelessWidget {
   void _openDetail(BuildContext context, TutorialExercise exercise) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ExerciseDetailPage(
-          exercise: exercise,
-          primaryColor: primaryColor,
-        ),
+        builder: (_) =>
+            ExerciseDetailPage(exercise: exercise, primaryColor: primaryColor),
       ),
     );
   }
@@ -96,8 +94,10 @@ class _ExerciseCard extends StatelessWidget {
                 height: _previewHeight,
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -119,9 +119,7 @@ class _ExerciseCard extends StatelessWidget {
                         children: [
                           Text(
                             exercise.title,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 2),

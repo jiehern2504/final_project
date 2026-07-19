@@ -5,17 +5,6 @@ import '../models/workout_plan_models.dart';
 import 'typing_indicator.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// A single chat bubble that renders one [ChatMessage].
-///
-/// • User messages  → right-aligned, primary green background.
-/// • AI messages    → left-aligned, light grey background.
-/// • Loading state  → left-aligned grey bubble with [TypingIndicator].
-/// • Error state    → left-aligned with a subtle red tint.
-/// • Plan message   → left-aligned wide card with an "Add to my progress"
-///   action (see [message.plan]).
-///
-/// Reuses the app-wide colour constants so the bubble style always matches
-/// the rest of the UI without importing [AppColors] (avoiding circular deps).
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
@@ -26,13 +15,10 @@ class ChatBubble extends StatelessWidget {
 
   final ChatMessage message;
 
-  /// Called when the user taps "Add to my progress" on a plan message.
   final VoidCallback? onAdoptPlan;
 
-  /// True while the adopt action is in flight (disables the button).
   final bool adopting;
 
-  // ── Colour constants (aligned with AppColors / home_page palette) ─────────
   static const Color _kPrimary = AppColors.primary;
   static const Color _kUserText = Colors.white;
   static const Color _kAiBubble = Color(0xFFEEEEEE);
@@ -42,7 +28,6 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Loading placeholder — show typing indicator instead of text.
     if (message.isLoading) {
       return _BubbleShell(
         isUser: false,
@@ -51,7 +36,6 @@ class ChatBubble extends StatelessWidget {
       );
     }
 
-    // Plan card — a wider, interactive message.
     if (message.plan != null) {
       return _PlanMessage(
         plan: message.plan!,
@@ -78,18 +62,14 @@ class ChatBubble extends StatelessWidget {
       color: bubbleColor,
       child: Text(
         message.text,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: textColor,
-          height: 1.45,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: textColor, height: 1.45),
       ),
     );
   }
 }
 
-// ── Private shell ──────────────────────────────────────────────────────────
-
-/// Handles alignment, margin, max-width constraint and the rounded shape.
 class _BubbleShell extends StatelessWidget {
   const _BubbleShell({
     required this.isUser,
@@ -109,7 +89,6 @@ class _BubbleShell extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(
-          // Bubbles never exceed 80 % of the screen width.
           maxWidth: MediaQuery.sizeOf(context).width * 0.80,
         ),
         decoration: BoxDecoration(
@@ -127,10 +106,6 @@ class _BubbleShell extends StatelessWidget {
   }
 }
 
-// ── Plan message ─────────────────────────────────────────────────────────────
-
-/// A left-aligned wide card that shows a generated [WorkoutPlan] with an
-/// "Add to my progress" button.
 class _PlanMessage extends StatelessWidget {
   const _PlanMessage({
     required this.plan,
@@ -178,9 +153,9 @@ class _PlanMessage extends StatelessWidget {
                   child: Text(
                     plan.title,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: _kText,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      color: _kText,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -188,9 +163,9 @@ class _PlanMessage extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               '${plan.days.length} days • only uses your tutorial exercises',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _withOpacity(_kText, 0.6),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: _withOpacity(_kText, 0.6)),
             ),
             const SizedBox(height: 10),
             ...plan.days.map((PlanDay day) => _DayBlock(day: day)),
@@ -198,16 +173,15 @@ class _PlanMessage extends StatelessWidget {
             if (adopted)
               Row(
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: _kPrimary, size: 20),
+                  const Icon(Icons.check_circle, color: _kPrimary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Added to your progress',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: _kPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: _kPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -264,9 +238,9 @@ class _DayBlock extends StatelessWidget {
           Text(
             day.label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: _kText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: _kText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           ...day.exercises.map(
@@ -275,23 +249,26 @@ class _DayBlock extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.circle,
-                      size: 6, color: _withOpacity(_kPrimary, 0.6)),
+                  Icon(
+                    Icons.circle,
+                    size: 6,
+                    color: _withOpacity(_kPrimary, 0.6),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       e.title,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _withOpacity(_kText, 0.85),
-                          ),
+                        color: _withOpacity(_kText, 0.85),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     e.setsLabel,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _withOpacity(_kText, 0.55),
-                        ),
+                      color: _withOpacity(_kText, 0.55),
+                    ),
                   ),
                 ],
               ),

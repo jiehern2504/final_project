@@ -25,10 +25,8 @@ class _ProgressCard extends StatelessWidget {
       stream: repo.watchActivePlan(),
       builder: (BuildContext context, AsyncSnapshot<WorkoutPlan?> snapshot) {
         final PlanProgress progress =
-            snapshot.data?.progress ?? const PlanProgress(
-              completedDays: 0,
-              totalDays: 0,
-            );
+            snapshot.data?.progress ??
+            const PlanProgress(completedDays: 0, totalDays: 0);
         final double fraction = progress.fraction;
         final int percentage = (fraction * 100).round();
         final bool hasActivePlan = snapshot.data != null;
@@ -71,8 +69,9 @@ class _ProgressCard extends StatelessWidget {
                             strokeWidth: 14,
                             strokeCap: StrokeCap.round,
                             backgroundColor: _withOpacity(primaryColor, 0.14),
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              primaryColor,
+                            ),
                           ),
                         ),
                         Column(
@@ -80,9 +79,7 @@ class _ProgressCard extends StatelessWidget {
                           children: [
                             Text(
                               '$percentage%',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
+                              style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(
                                     color: textColor,
                                     fontWeight: FontWeight.w800,
@@ -91,9 +88,7 @@ class _ProgressCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               'Completed',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: _withOpacity(textColor, 0.72),
                                   ),
@@ -108,9 +103,9 @@ class _ProgressCard extends StatelessWidget {
                     daysLabel,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),

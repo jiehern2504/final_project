@@ -29,16 +29,16 @@ class _GreetingSection extends StatelessWidget {
               Text(
                 'Hi, $firstName',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: primaryColor,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Let\'s start your workout today!',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _withOpacity(textColor, 0.85),
-                    ),
+                  color: _withOpacity(textColor, 0.85),
+                ),
               ),
             ],
           ),
@@ -108,8 +108,14 @@ class _TopIconButton extends StatelessWidget {
                 right: -2,
                 top: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.all(Radius.circular(10)),

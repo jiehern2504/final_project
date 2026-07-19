@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'recommended_video.dart';
 
-/// A 16:9 YouTube thumbnail with a red play badge and duration pill. Falls back
-/// to a dark box while loading or if the image fails (e.g. offline).
 class VideoThumbnail extends StatelessWidget {
   const VideoThumbnail({
     super.key,
@@ -28,9 +26,9 @@ class VideoThumbnail extends StatelessWidget {
               fit: BoxFit.cover,
               errorBuilder: (BuildContext c, Object e, StackTrace? s) =>
                   const ColoredBox(color: Color(0xFF141414)),
-              loadingBuilder: (BuildContext c, Widget child,
-                      ImageChunkEvent? progress) =>
-                  progress == null
+              loadingBuilder:
+                  (BuildContext c, Widget child, ImageChunkEvent? progress) =>
+                      progress == null
                       ? child
                       : const ColoredBox(color: Color(0xFF141414)),
             ),

@@ -7,7 +7,7 @@ import '../../summary/summary_repository.dart';
 
 class WorkoutPlanRepository {
   WorkoutPlanRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -16,32 +16,31 @@ class WorkoutPlanRepository {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
-  /// Active plan, or latest draft if the user has not started yet.
   Stream<WorkoutPlan?> watchCurrentPlan() {
     final String? uid = _uid;
     if (uid == null) {
       return Stream<WorkoutPlan?>.value(null);
     }
-    return _plans.where('userId', isEqualTo: uid).snapshots().map(
-      (QuerySnapshot<Map<String, dynamic>> snapshot) {
-        final List<WorkoutPlan> plans = snapshot.docs
-            .map(WorkoutPlan.fromFirestore)
-            .toList();
-        final List<WorkoutPlan> active = plans
-            .where((WorkoutPlan p) => p.status == WorkoutPlanStatus.active)
-            .toList();
-        if (active.isNotEmpty) {
-          return _latestFromPlans(active);
-        }
-        final List<WorkoutPlan> drafts = plans
-            .where((WorkoutPlan p) => p.status == WorkoutPlanStatus.draft)
-            .toList();
-        if (drafts.isNotEmpty) {
-          return _latestFromPlans(drafts);
-        }
-        return null;
-      },
-    );
+    return _plans.where('userId', isEqualTo: uid).snapshots().map((
+      QuerySnapshot<Map<String, dynamic>> snapshot,
+    ) {
+      final List<WorkoutPlan> plans = snapshot.docs
+          .map(WorkoutPlan.fromFirestore)
+          .toList();
+      final List<WorkoutPlan> active = plans
+          .where((WorkoutPlan p) => p.status == WorkoutPlanStatus.active)
+          .toList();
+      if (active.isNotEmpty) {
+        return _latestFromPlans(active);
+      }
+      final List<WorkoutPlan> drafts = plans
+          .where((WorkoutPlan p) => p.status == WorkoutPlanStatus.draft)
+          .toList();
+      if (drafts.isNotEmpty) {
+        return _latestFromPlans(drafts);
+      }
+      return null;
+    });
   }
 
   Stream<WorkoutPlan?> watchActivePlan() {
@@ -54,8 +53,8 @@ class WorkoutPlanRepository {
         .where('status', isEqualTo: 'active')
         .snapshots()
         .map((QuerySnapshot<Map<String, dynamic>> snapshot) {
-      return _latestFromDocs(snapshot.docs);
-    });
+          return _latestFromDocs(snapshot.docs);
+        });
   }
 
   Future<WorkoutPlan?> fetchActivePlan() async {
@@ -71,8 +70,9 @@ class WorkoutPlanRepository {
   Future<WorkoutPlan?> fetchLatestPlan() async {
     final String? uid = _uid;
     if (uid == null) return null;
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _plans.where('userId', isEqualTo: uid).get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _plans
+        .where('userId', isEqualTo: uid)
+        .get();
     return _latestFromDocs(snapshot.docs);
   }
 
@@ -84,9 +84,9 @@ class WorkoutPlanRepository {
   }
 
   WorkoutPlan? _latestFromPlans(List<WorkoutPlan> input) {
-    // Locked weeks of a multi-week series are hidden until unlocked.
-    final List<WorkoutPlan> plans =
-        input.where((WorkoutPlan p) => !p.locked).toList();
+    final List<WorkoutPlan> plans = input
+        .where((WorkoutPlan p) => !p.locked)
+        .toList();
     if (plans.isEmpty) return null;
     plans.sort((WorkoutPlan a, WorkoutPlan b) {
       final DateTime aTime =
@@ -102,20 +102,17 @@ class WorkoutPlanRepository {
     final Map<String, dynamic> data = plan.toMap();
     if (plan.id.isEmpty) {
       data['createdAt'] = FieldValue.serverTimestamp();
-      final DocumentReference<Map<String, dynamic>> ref =
-          await _plans.add(data);
+      final DocumentReference<Map<String, dynamic>> ref = await _plans.add(
+        data,
+      );
       return ref.id;
     }
     await _plans.doc(plan.id).set(data, SetOptions(merge: true));
     return plan.id;
   }
 
-  /// A fresh Firestore document id, used to tag all weeks of one series before
-  /// any of them are saved.
   String newPlanId() => _plans.doc().id;
 
-  /// Saves every week of a multi-week series and returns the hydrated Week 1
-  /// plan (the only unlocked week the user can start).
   Future<WorkoutPlan> saveSeries(
     List<WorkoutPlan> weeks, {
     String source = 'ai',
@@ -125,7 +122,9 @@ class WorkoutPlanRepository {
       final Map<String, dynamic> data = week.toMap();
       data['source'] = source;
       data['createdAt'] = FieldValue.serverTimestamp();
-      final DocumentReference<Map<String, dynamic>> ref = await _plans.add(data);
+      final DocumentReference<Map<String, dynamic>> ref = await _plans.add(
+        data,
+      );
       if (week.weekNumber == 1) {
         firstWeek = week.copyWith(id: ref.id, createdAt: DateTime.now());
       }
@@ -136,9 +135,6 @@ class WorkoutPlanRepository {
     return firstWeek;
   }
 
-  /// Saves a hand-built multi-week plan (one [PlanDay] list per week) as a
-  /// locked series: Week 1 is a draft the user can start, later weeks unlock as
-  /// each week is completed.
   Future<WorkoutPlan> saveManualSeries({
     required String title,
     required List<List<PlanDay>> weeks,
@@ -151,7 +147,9 @@ class WorkoutPlanRepository {
     final int total = weeks.length;
     final DateTime now = DateTime.now();
 
-    final List<WorkoutPlan> weekPlans = List<WorkoutPlan>.generate(total, (int i) {
+    final List<WorkoutPlan> weekPlans = List<WorkoutPlan>.generate(total, (
+      int i,
+    ) {
       final int weekNumber = i + 1;
       final List<PlanDay> days = weeks[i];
       return WorkoutPlan(
@@ -172,17 +170,14 @@ class WorkoutPlanRepository {
     return saveSeries(weekPlans, source: 'manual');
   }
 
-  /// Completes [current] and unlocks/activates the next week in the same series
-  /// (if any). Called when the user finishes a week and chooses to continue.
   Future<void> advanceToNextWeek(WorkoutPlan current) async {
     final String? uid = _uid;
     final String? seriesId = current.seriesId;
     if (uid == null || seriesId == null) return;
 
-    // Single-field query (no composite index needed); filter the series client
-    // side to find the next week.
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _plans.where('userId', isEqualTo: uid).get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _plans
+        .where('userId', isEqualTo: uid)
+        .get();
     QueryDocumentSnapshot<Map<String, dynamic>>? nextDoc;
     for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
         in snapshot.docs) {
@@ -221,9 +216,7 @@ class WorkoutPlanRepository {
     for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
         in activePlans.docs) {
       if (doc.id != planId) {
-        batch.update(doc.reference, <String, dynamic>{
-          'status': 'completed',
-        });
+        batch.update(doc.reference, <String, dynamic>{'status': 'completed'});
       }
     }
     batch.update(_plans.doc(planId), <String, dynamic>{
@@ -234,14 +227,13 @@ class WorkoutPlanRepository {
   }
 
   Future<void> markDayComplete(String planId, int dayNumber) async {
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _plans.doc(planId).get();
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _plans
+        .doc(planId)
+        .get();
     if (!doc.exists) return;
 
     final WorkoutPlan plan = WorkoutPlan.fromFirestore(doc);
 
-    // Guard: if this day doesn't exist or is already done, do nothing — avoids
-    // double-logging the workout and re-arming the daily lock on a repeat call.
     final PlanDay? target = plan.dayByNumber(dayNumber);
     if (target == null || target.completed) return;
 
@@ -252,51 +244,42 @@ class WorkoutPlanRepository {
       return day;
     }).toList();
 
-    final int completedDays =
-        updatedDays.where((PlanDay d) => d.completed).length;
+    final int completedDays = updatedDays
+        .where((PlanDay d) => d.completed)
+        .length;
     final int totalDays = updatedDays.length;
 
-    // Keep the plan 'active' even at 100% so the progress page can ASK the user
-    // what to do next (repeat it or start a new plan) instead of silently
-    // archiving it, which looked like an auto-reset.
     await _plans.doc(planId).update(<String, dynamic>{
       'days': updatedDays.map((PlanDay d) => d.toMap()).toList(),
       'progress': PlanProgress(
         completedDays: completedDays,
         totalDays: totalDays,
       ).toMap(),
-      // Record when this happened so the UI can enforce "one day per day".
-      // Client time (not serverTimestamp) so the local write immediately
-      // reflects "marked today" — avoids a race where the next day briefly
-      // looks markable before the server timestamp lands.
+
       'lastMarkedAt': Timestamp.fromDate(DateTime.now()),
     });
 
-    // Log the completed workout for the Home summary chart (skip rest days).
     final PlanDay? marked = plan.dayByNumber(dayNumber);
     if (marked != null && !marked.isRest && marked.exercises.isNotEmpty) {
       int sets = 0;
       for (final PlanExercise e in marked.exercises) {
         sets += _firstIntOf(e.setsLabel, fallback: 3);
       }
-      await SummaryRepository(firestore: _firestore)
-          .logWorkout(sets: sets, title: plan.title);
+      await SummaryRepository(
+        firestore: _firestore,
+      ).logWorkout(sets: sets, title: plan.title);
     }
   }
 
-  /// First integer found in [s] (the "3" in "3 sets × 12 reps"); [fallback]
-  /// when none is present.
   int _firstIntOf(String s, {int fallback = 0}) {
     final Match? m = RegExp(r'\d+').firstMatch(s);
     return m == null ? fallback : int.parse(m.group(0)!);
   }
 
-  /// Resets all completed days back to zero and reactivates the plan. Because
-  /// achievements/badges are derived from `progress.completedDays`, this also
-  /// effectively resets them.
   Future<void> resetPlanProgress(String planId) async {
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _plans.doc(planId).get();
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _plans
+        .doc(planId)
+        .get();
     if (!doc.exists) return;
 
     final WorkoutPlan plan = WorkoutPlan.fromFirestore(doc);
@@ -311,46 +294,42 @@ class WorkoutPlanRepository {
         totalDays: resetDays.length,
       ).toMap(),
       'status': 'active',
-      // Clear the daily lock so the user can start marking again today.
+
       'lastMarkedAt': FieldValue.delete(),
     });
   }
 
-  /// Updates just the user's weight and height (kg / cm) on their profile.
   Future<void> updateBodyMetrics({
     required double weight,
     required double height,
   }) async {
     final String? uid = _uid;
     if (uid == null) return;
-    await _firestore.collection('users').doc(uid).set(
-      <String, dynamic>{'weight': weight, 'height': height},
-      SetOptions(merge: true),
-    );
-    // Record the weight so the Home summary chart has a data point.
+    await _firestore.collection('users').doc(uid).set(<String, dynamic>{
+      'weight': weight,
+      'height': height,
+    }, SetOptions(merge: true));
+
     await SummaryRepository(firestore: _firestore).logWeight(weight);
   }
 
-  /// Archives a plan (marks it 'completed') so it leaves the active slot and a
-  /// new plan can take over. Keeps it in history rather than deleting it.
   Future<void> archivePlan(String planId) async {
     await _plans.doc(planId).update(<String, dynamic>{'status': 'completed'});
   }
 
-  /// Permanently deletes a plan document (and therefore its progress).
   Future<void> deletePlan(String planId) async {
     await _plans.doc(planId).delete();
   }
 
-  /// True if the user has ever finished a full 4-week (one-month) plan series:
-  /// a series with 4 weeks where every week's days are all completed.
   Future<bool> hasCompletedFourWeekPlan() async {
     final String? uid = _uid;
     if (uid == null) return false;
-    final QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _plans.where('userId', isEqualTo: uid).get();
-    final List<WorkoutPlan> plans =
-        snapshot.docs.map(WorkoutPlan.fromFirestore).toList();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _plans
+        .where('userId', isEqualTo: uid)
+        .get();
+    final List<WorkoutPlan> plans = snapshot.docs
+        .map(WorkoutPlan.fromFirestore)
+        .toList();
 
     final Map<String, List<WorkoutPlan>> bySeries =
         <String, List<WorkoutPlan>>{};
@@ -361,10 +340,12 @@ class WorkoutPlanRepository {
 
     for (final List<WorkoutPlan> weeks in bySeries.values) {
       final int total = weeks.first.totalWeeks;
-      if (weeks.length < total) continue; // not all weeks present
-      final bool allDone = weeks.every((WorkoutPlan p) =>
-          p.progress.totalDays > 0 &&
-          p.progress.completedDays >= p.progress.totalDays);
+      if (weeks.length < total) continue;
+      final bool allDone = weeks.every(
+        (WorkoutPlan p) =>
+            p.progress.totalDays > 0 &&
+            p.progress.completedDays >= p.progress.totalDays,
+      );
       if (allDone) return true;
     }
     return false;
@@ -373,8 +354,10 @@ class WorkoutPlanRepository {
   Future<Map<String, dynamic>?> fetchUserProfile() async {
     final String? uid = _uid;
     if (uid == null) return null;
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _firestore.collection('users').doc(uid).get();
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _firestore
+        .collection('users')
+        .doc(uid)
+        .get();
     return doc.data();
   }
 
@@ -393,18 +376,14 @@ class WorkoutPlanRepository {
       title: title,
       status: WorkoutPlanStatus.draft,
       days: days,
-      progress: PlanProgress(
-        completedDays: 0,
-        totalDays: days.length,
-      ),
+      progress: PlanProgress(completedDays: 0, totalDays: days.length),
       createdAt: DateTime.now(),
     );
 
     final Map<String, dynamic> data = draft.toMap();
     data['source'] = 'manual';
     data['createdAt'] = FieldValue.serverTimestamp();
-    final DocumentReference<Map<String, dynamic>> ref =
-        await _plans.add(data);
+    final DocumentReference<Map<String, dynamic>> ref = await _plans.add(data);
     return ref.id;
   }
 

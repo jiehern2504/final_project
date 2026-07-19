@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'summary_models.dart';
 import '../../core/theme/app_colors.dart';
 
-/// Which single series a [SummaryChart] draws.
 enum SummaryMetric { weight, workouts }
 
-/// A single-line chart of one metric — body weight (teal) OR workouts
-/// completed (green). Weight and workouts are shown as two separate charts.
 class SummaryChart extends StatelessWidget {
   const SummaryChart({
     super.key,
@@ -25,8 +22,6 @@ class SummaryChart extends StatelessWidget {
   final double height;
   final void Function(int index)? onPointTap;
 
-  /// Optional caption under the x-axis (e.g. "Day" or "Month"). Shown only when
-  /// [showAxes] is true.
   final String? xAxisLabel;
 
   static const Color weightColor = Color(0xFF2AA6A6);
@@ -47,7 +42,10 @@ class SummaryChart extends StatelessWidget {
           color: _color,
           xLabel: xAxisLabel,
         );
-        final Widget chart = CustomPaint(size: Size(w, height), painter: painter);
+        final Widget chart = CustomPaint(
+          size: Size(w, height),
+          painter: painter,
+        );
         if (onPointTap == null) {
           return SizedBox(width: w, height: height, child: chart);
         }
@@ -87,7 +85,6 @@ class _SummaryPainter extends CustomPainter {
   double get _padT => 12;
   double get _padB => showAxes ? (xLabel != null ? 36 : 22) : 10;
 
-  /// The value for this metric at [p]; null only for missing weight readings.
   double? _value(ChartPoint p) =>
       metric == SummaryMetric.weight ? p.weight : p.metric.toDouble();
 
@@ -105,7 +102,7 @@ class _SummaryPainter extends CustomPainter {
       for (final ChartPoint p in points)
         if (_value(p) != null) _value(p)!,
     ];
-    if (vals.isEmpty) return; // e.g. no weight readings in this period
+    if (vals.isEmpty) return;
 
     double vMin;
     double vMax;
@@ -127,14 +124,17 @@ class _SummaryPainter extends CustomPainter {
 
     double y(double v) => _padT + plotH * (1 - (v - vMin) / (vMax - vMin));
 
-    // Grid + left-axis labels.
     final Paint gridPaint = Paint()
       ..color = _grid
       ..strokeWidth = 1;
     final int rows = showAxes ? 4 : 3;
     for (int r = 0; r <= rows; r++) {
       final double yy = _padT + plotH * r / rows;
-      canvas.drawLine(Offset(_padL, yy), Offset(size.width - _padR, yy), gridPaint);
+      canvas.drawLine(
+        Offset(_padL, yy),
+        Offset(size.width - _padR, yy),
+        gridPaint,
+      );
       if (showAxes) {
         final double v = vMax - (vMax - vMin) * r / rows;
         final String label = metric == SummaryMetric.weight
@@ -144,25 +144,32 @@ class _SummaryPainter extends CustomPainter {
       }
     }
 
-    // X-axis tick labels.
     if (showAxes) {
       final int step = (points.length / 7).ceil().clamp(1, 999);
       for (int i = 0; i < points.length; i++) {
         if (i % step == 0 || i == points.length - 1) {
-          _text(canvas, points[i].label,
-              Offset(_x(i, plotW), size.height - _padB + 3),
-              anchorTop: true, center: true);
+          _text(
+            canvas,
+            points[i].label,
+            Offset(_x(i, plotW), size.height - _padB + 3),
+            anchorTop: true,
+            center: true,
+          );
         }
       }
     }
 
-    // X-axis title (e.g. "Day" / "Month").
     if (showAxes && xLabel != null) {
-      _text(canvas, xLabel!, Offset(_padL + plotW / 2, size.height - 14),
-          anchorTop: true, center: true, bold: true);
+      _text(
+        canvas,
+        xLabel!,
+        Offset(_padL + plotW / 2, size.height - 14),
+        anchorTop: true,
+        center: true,
+        bold: true,
+      );
     }
 
-    // Line — weight can have gaps (missing readings) → draw in segments.
     final Paint linePaint = Paint()
       ..color = color
       ..strokeWidth = 3
@@ -187,7 +194,6 @@ class _SummaryPainter extends CustomPainter {
     }
     if (seg != null) canvas.drawPath(seg, linePaint);
 
-    // Dots (only when the series is short enough to read).
     if (points.length <= 14) {
       for (int i = 0; i < points.length; i++) {
         final double? v = _value(points[i]);
@@ -234,7 +240,6 @@ class _SummaryPainter extends CustomPainter {
     tp.paint(canvas, Offset(dx, dy));
   }
 
-  /// Nearest point index to a horizontal tap position.
   int? indexAt(double dx, double width) {
     if (points.isEmpty) return null;
     final double plotW = width - _padL - _padR;

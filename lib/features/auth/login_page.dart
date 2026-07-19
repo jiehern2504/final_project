@@ -1,4 +1,4 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../onboarding/widgets/bear_mascot.dart';
@@ -82,9 +82,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _goToSignup() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SignupPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SignupPage()));
   }
 
   @override
@@ -112,10 +112,9 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 6),
                       Text(
                         "Sign in or create your account to continue.",
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.black54),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                       ),
                       const SizedBox(height: 18),
                       TextField(
@@ -154,18 +153,14 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           Text(
                             "Don't have an account? ",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.black54),
                           ),
                           GestureDetector(
                             onTap: _isSubmitting ? null : _goToSignup,
                             child: Text(
                               'Sign up',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w700,

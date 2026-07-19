@@ -2,11 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class WorkoutReminderPrefs {
-  const WorkoutReminderPrefs({
-    this.enabled = false,
-    this.hour,
-    this.minute,
-  });
+  const WorkoutReminderPrefs({this.enabled = false, this.hour, this.minute});
 
   final bool enabled;
   final int? hour;
@@ -35,7 +31,7 @@ class WorkoutReminderPrefs {
 
 class UserPreferencesRepository {
   UserPreferencesRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -74,13 +70,10 @@ class UserPreferencesRepository {
     if (doc == null) {
       throw StateError('You must be signed in to save preferences.');
     }
-    await doc.set(
-      <String, dynamic>{
-        'workoutReminderEnabled': enabled,
-        'workoutReminderHour': hour ?? FieldValue.delete(),
-        'workoutReminderMinute': minute ?? FieldValue.delete(),
-      },
-      SetOptions(merge: true),
-    );
+    await doc.set(<String, dynamic>{
+      'workoutReminderEnabled': enabled,
+      'workoutReminderHour': hour ?? FieldValue.delete(),
+      'workoutReminderMinute': minute ?? FieldValue.delete(),
+    }, SetOptions(merge: true));
   }
 }

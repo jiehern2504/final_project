@@ -7,21 +7,17 @@ import 'pose_feedback.dart';
 bool _usable(PoseLandmark? l) =>
     l != null && l.likelihood >= kMinLandmarkLikelihood;
 
-/// Key angles captured during a glute bridge.
 class GluteBridgeMetrics {
   const GluteBridgeMetrics({
     required this.hipAngleDeg,
     required this.kneeAngleDeg,
   });
 
-  /// Shoulder–hip–knee angle. Near 180° = hips fully raised.
   final double hipAngleDeg;
 
-  /// Hip–knee–ankle angle. Should stay around 80–100° for foot placement.
   final double kneeAngleDeg;
 }
 
-/// Picks the side with better landmark confidence.
 GluteBridgeMetrics? computeGluteBridgeMetrics(Pose pose) {
   final GluteBridgeMetrics? left = _metricsForSide(
     pose: pose,
@@ -42,8 +38,7 @@ GluteBridgeMetrics? computeGluteBridgeMetrics(Pose pose) {
   if (left == null) return right;
   if (right == null) return left;
 
-  // Prefer the side whose landmarks are more confident.
-  final double leftConf  = _sideConfidence(pose, isLeft: true);
+  final double leftConf = _sideConfidence(pose, isLeft: true);
   final double rightConf = _sideConfidence(pose, isLeft: false);
   return leftConf >= rightConf ? left : right;
 }
@@ -56,40 +51,42 @@ GluteBridgeMetrics? _metricsForSide({
   required PoseLandmarkType ankleT,
 }) {
   final PoseLandmark? shoulder = pose.landmarks[shoulderT];
-  final PoseLandmark? hip      = pose.landmarks[hipT];
-  final PoseLandmark? knee     = pose.landmarks[kneeT];
-  final PoseLandmark? ankle    = pose.landmarks[ankleT];
+  final PoseLandmark? hip = pose.landmarks[hipT];
+  final PoseLandmark? knee = pose.landmarks[kneeT];
+  final PoseLandmark? ankle = pose.landmarks[ankleT];
 
-  if (!_usable(shoulder) || !_usable(hip) || !_usable(knee) || !_usable(ankle)) {
+  if (!_usable(shoulder) ||
+      !_usable(hip) ||
+      !_usable(knee) ||
+      !_usable(ankle)) {
     return null;
   }
 
-  final double hipAngle  = angleAtPoseLandmarks(shoulder!, hip!, knee!);
+  final double hipAngle = angleAtPoseLandmarks(shoulder!, hip!, knee!);
   final double kneeAngle = angleAtPoseLandmarks(hip, knee, ankle!);
 
   return GluteBridgeMetrics(hipAngleDeg: hipAngle, kneeAngleDeg: kneeAngle);
 }
 
 double _sideConfidence(Pose pose, {required bool isLeft}) {
-  final PoseLandmark? s = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftShoulder
-      : PoseLandmarkType.rightShoulder];
-  final PoseLandmark? h = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftHip
-      : PoseLandmarkType.rightHip];
-  final PoseLandmark? k = pose.landmarks[isLeft
-      ? PoseLandmarkType.leftKnee
-      : PoseLandmarkType.rightKnee];
+  final PoseLandmark? s =
+      pose.landmarks[isLeft
+          ? PoseLandmarkType.leftShoulder
+          : PoseLandmarkType.rightShoulder];
+  final PoseLandmark? h = pose
+      .landmarks[isLeft ? PoseLandmarkType.leftHip : PoseLandmarkType.rightHip];
+  final PoseLandmark? k =
+      pose.landmarks[isLeft
+          ? PoseLandmarkType.leftKnee
+          : PoseLandmarkType.rightKnee];
   if (s == null || h == null || k == null) return 0;
   return (s.likelihood + h.likelihood + k.likelihood) / 3;
 }
 
-/// Returns [PoseFeedback] describing glute bridge form.
 PoseFeedback analyzeGluteBridge(Pose pose) {
   final GluteBridgeMetrics? m = computeGluteBridgeMetrics(pose);
   if (m == null) return PoseFeedback.noBody;
 
-  // Check knee angle first — bad foot placement makes everything else wrong.
   if (m.kneeAngleDeg < kGluteBridgeKneeIdealMinDeg ||
       m.kneeAngleDeg > kGluteBridgeKneeIdealMaxDeg) {
     return const PoseFeedback(

@@ -36,9 +36,9 @@ class _ProgressPageState extends State<ProgressPage> {
     try {
       await _repository.startPlan(plan.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Plan started. Good luck!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Plan started. Good luck!')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,15 +57,14 @@ class _ProgressPageState extends State<ProgressPage> {
     setState(() => _markingDays.add(dayNumber));
     try {
       await _repository.markDayComplete(plan.id, dayNumber);
-      // This day wasn't complete before, so +1. If that finishes the plan, ask
-      // the user what to do next instead of silently archiving it.
-      final bool nowComplete = plan.progress.totalDays > 0 &&
+
+      final bool nowComplete =
+          plan.progress.totalDays > 0 &&
           plan.progress.completedDays + 1 >= plan.progress.totalDays;
       if (nowComplete && mounted) {
         if (plan.isSeries && plan.weekNumber < plan.totalWeeks) {
           await _showWeekCompletePrompt(plan);
         } else {
-          // Finishing the whole plan — nudge the user to update their stats.
           await _promptUpdateBodyMetrics();
           if (!mounted) return;
           await _showCompletionPrompt(plan);
@@ -86,8 +85,6 @@ class _ProgressPageState extends State<ProgressPage> {
     }
   }
 
-  /// Asks the user what to do when a plan is finished: repeat it or start a new
-  /// one. Chosen instead of silently resetting/archiving the plan.
   Future<void> _showCompletionPrompt(WorkoutPlan plan) async {
     final String? choice = await showDialog<String>(
       context: context,
@@ -120,8 +117,6 @@ class _ProgressPageState extends State<ProgressPage> {
     }
   }
 
-  /// The earliest day the user still has to complete (null when all done).
-  /// Marking is only allowed on this day, so days can't be done out of order.
   int? _firstIncompleteDayNumber(WorkoutPlan plan) {
     final List<PlanDay> days = <PlanDay>[...plan.days]
       ..sort((PlanDay a, PlanDay b) => a.dayNumber.compareTo(b.dayNumber));
@@ -131,7 +126,6 @@ class _ProgressPageState extends State<ProgressPage> {
     return null;
   }
 
-  /// True when a day was already marked complete today (blocks a second one).
   bool _isMarkedToday(WorkoutPlan plan) {
     final DateTime? last = plan.lastMarkedAt;
     if (last == null) return false;
@@ -147,7 +141,6 @@ class _ProgressPageState extends State<ProgressPage> {
     return null;
   }
 
-  /// After finishing a plan, reminds the user to update their weight/height.
   Future<void> _promptUpdateBodyMetrics() async {
     Map<String, dynamic>? profile;
     try {
@@ -178,8 +171,9 @@ class _ProgressPageState extends State<ProgressPage> {
             const SizedBox(height: 12),
             TextField(
               controller: weightCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Weight (kg)',
                 prefixIcon: Icon(Icons.monitor_weight_outlined),
@@ -188,8 +182,9 @@ class _ProgressPageState extends State<ProgressPage> {
             const SizedBox(height: 8),
             TextField(
               controller: heightCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Height (cm)',
                 prefixIcon: Icon(Icons.height),
@@ -213,13 +208,18 @@ class _ProgressPageState extends State<ProgressPage> {
     if (save == true) {
       final double? w = double.tryParse(weightCtrl.text.trim());
       final double? h = double.tryParse(heightCtrl.text.trim());
-      if (w != null && h != null && w >= 25 && w <= 350 && h >= 80 && h <= 260) {
+      if (w != null &&
+          h != null &&
+          w >= 25 &&
+          w <= 350 &&
+          h >= 80 &&
+          h <= 260) {
         try {
           await _repository.updateBodyMetrics(weight: w, height: h);
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Stats updated.')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Stats updated.')));
           }
         } catch (_) {
           if (mounted) {
@@ -246,7 +246,6 @@ class _ProgressPageState extends State<ProgressPage> {
     heightCtrl.dispose();
   }
 
-  /// Asks whether to start the next week after finishing a week in a series.
   Future<void> _showWeekCompletePrompt(WorkoutPlan plan) async {
     final int nextWeek = plan.weekNumber + 1;
     final String? choice = await showDialog<String>(
@@ -274,7 +273,6 @@ class _ProgressPageState extends State<ProgressPage> {
     }
   }
 
-  /// Completes the current week and unlocks/activates the next one.
   Future<void> _advanceWeek(WorkoutPlan plan) async {
     try {
       await _repository.advanceToNextWeek(plan);
@@ -313,14 +311,10 @@ class _ProgressPageState extends State<ProgressPage> {
     }
   }
 
-  /// Archives the finished plan (so it leaves the active slot) and opens the
-  /// create-plan flow so the user can actually build a new one.
   Future<void> _goToNewPlan(WorkoutPlan plan) async {
     try {
       await _repository.archivePlan(plan.id);
-    } catch (_) {
-      // Non-fatal — still let them create a new plan.
-    }
+    } catch (_) {}
     if (!mounted) return;
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -356,9 +350,9 @@ class _ProgressPageState extends State<ProgressPage> {
     try {
       await _repository.deletePlan(plan.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Plan deleted.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Plan deleted.')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -430,8 +424,6 @@ class _ProgressPageState extends State<ProgressPage> {
     );
   }
 
-  /// Builds the day cards, gating "Mark done" so days are completed strictly
-  /// in order and at most one per calendar day.
   List<Widget> _dayCards(WorkoutPlan plan) {
     final int? nextDay = _firstIncompleteDayNumber(plan);
     final bool markedToday = _isMarkedToday(plan);
@@ -460,10 +452,7 @@ class _ProgressPageState extends State<ProgressPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Your Progress'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Your Progress'), centerTitle: true),
       body: SafeArea(
         child: StreamBuilder<WorkoutPlan?>(
           stream: _repository.watchCurrentPlan(),
@@ -493,24 +482,24 @@ class _ProgressPageState extends State<ProgressPage> {
                 Text(
                   plan.title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '${plan.progress.completedDays}/${plan.progress.totalDays} days completed',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.black54,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: Colors.black54),
                 ),
                 if (plan.totalWeeks > 1) ...[
                   const SizedBox(height: 4),
                   Text(
                     'Week ${plan.weekNumber} of ${plan.totalWeeks}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _kPrimaryColor,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: _kPrimaryColor,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -609,9 +598,9 @@ class _CompletionBanner extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Plan complete!',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -680,9 +669,9 @@ class _WeekAdvanceBanner extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Week done!',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -729,9 +718,9 @@ class _EmptyProgressState extends StatelessWidget {
             Text(
               'Create or view your workout plan to start tracking progress.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black54,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 20),
             FilledButton(
@@ -760,8 +749,6 @@ class _DayCard extends StatelessWidget {
   final bool isMarking;
   final VoidCallback? onMarkComplete;
 
-  /// When the day can't be marked yet, why (e.g. out of order, or already did
-  /// one today). Null when the day is markable or already complete.
   final String? lockHint;
 
   final void Function(String exerciseId) onExerciseTap;
@@ -788,8 +775,8 @@ class _DayCard extends StatelessWidget {
                   child: Text(
                     day.label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 if (planStarted && onMarkComplete != null)

@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../health_calculator.dart';
 
-/// The white card holding the editable inputs. The "Activity" row only appears
-/// in TDEE mode (BMI doesn't need it).
 class InputCard extends StatelessWidget {
   const InputCard({
     super.key,

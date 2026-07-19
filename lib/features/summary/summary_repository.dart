@@ -3,14 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'summary_models.dart';
 
-/// Reads and writes the small time-series logs behind the Home summary chart.
-///
-/// Stored under the user document as subcollections:
-/// - `users/{uid}/weightLog`  → { at: Timestamp, kg: double }
-/// - `users/{uid}/workoutLog` → { at: Timestamp, sets: int, title: string }
 class SummaryRepository {
   SummaryRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -22,17 +17,18 @@ class SummaryRepository {
   CollectionReference<Map<String, dynamic>> _workoutCol(String uid) =>
       _firestore.collection('users').doc(uid).collection('workoutLog');
 
-  /// Loads all of the user's logs (small data), sorted oldest-first.
   Future<SummaryData> load() async {
     final String? uid = _uid;
     if (uid == null) {
       return SummaryData(weights: <WeightLog>[], workouts: <WorkoutLog>[]);
     }
 
-    final QuerySnapshot<Map<String, dynamic>> wSnap =
-        await _weightCol(uid).orderBy('at').get();
-    final QuerySnapshot<Map<String, dynamic>> oSnap =
-        await _workoutCol(uid).orderBy('at').get();
+    final QuerySnapshot<Map<String, dynamic>> wSnap = await _weightCol(
+      uid,
+    ).orderBy('at').get();
+    final QuerySnapshot<Map<String, dynamic>> oSnap = await _workoutCol(
+      uid,
+    ).orderBy('at').get();
 
     final List<WeightLog> weights = wSnap.docs
         .map((QueryDocumentSnapshot<Map<String, dynamic>> d) {
@@ -62,11 +58,6 @@ class SummaryRepository {
     return SummaryData(weights: weights, workouts: workouts);
   }
 
-  /// Records a weight reading (client time so the point shows immediately).
-  ///
-  /// Keeps at most ONE reading per calendar day: if a reading already exists
-  /// today it is updated instead of adding a duplicate, so the chart isn't
-  /// cluttered with several points stacked on the same day.
   Future<void> logWeight(double kg) async {
     final String? uid = _uid;
     if (uid == null) return;
@@ -91,7 +82,6 @@ class SummaryRepository {
     }
   }
 
-  /// Records one completed workout day.
   Future<void> logWorkout({required int sets, required String title}) async {
     final String? uid = _uid;
     if (uid == null) return;

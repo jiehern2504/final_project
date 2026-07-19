@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// A vertical scroll-wheel number picker (used for age and height).
-///
-/// The centred value is enlarged and coloured, with a thin guide line — the
-/// same feel as the reference design.
 class NumberWheel extends StatefulWidget {
   const NumberWheel({
     super.key,
@@ -52,7 +48,6 @@ class _NumberWheelState extends State<NumberWheel> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Centre guide line.
           Container(
             height: 52,
             margin: const EdgeInsets.symmetric(horizontal: 70),

@@ -10,22 +10,9 @@ import '../widgets/chat_bubble.dart';
 import '../../progress/progress_page.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// AI Fitness Chat Page.
-///
-/// Provides a conversational Q&A experience powered by Gemini through
-/// [AiChatService]. The assistant only answers questions about fitness,
-/// workouts, nutrition and healthy lifestyle — off-topic questions are
-/// politely declined by the model's system instruction.
-///
-/// When the user asks for a workout plan (e.g. "make me a workout plan"),
-/// this page generates a trackable plan via [WorkoutPlanService] — built only
-/// from the tutorial catalogue and matched to the user's profile — and lets
-/// the user adopt it into progress tracking.
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key, this.initialMessage});
 
-  /// If provided, this text is sent automatically as the user's first message
-  /// when the page opens (e.g. "help me to build workout plan").
   final String? initialMessage;
 
   @override
@@ -33,7 +20,6 @@ class AiChatPage extends StatefulWidget {
 }
 
 class _AiChatPageState extends State<AiChatPage> {
-  // ── Services ───────────────────────────────────────────────────────────────
   final AiChatService _chatService = AiChatService();
   final WorkoutPlanRepository _planRepository = WorkoutPlanRepository();
   late final WorkoutPlanService _planService = WorkoutPlanService(
@@ -41,15 +27,14 @@ class _AiChatPageState extends State<AiChatPage> {
     aiCaller: kUseFakeAiPlan ? fakePlanJson : null,
   );
 
-  // ── UI controllers ─────────────────────────────────────────────────────────
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _inputFocus = FocusNode();
 
-  // ── State ──────────────────────────────────────────────────────────────────
   final List<ChatMessage> _messages = <ChatMessage>[
     const ChatMessage(
-      text: "Hi! I'm your personal fitness coach 💪\n\n"
+      text:
+          "Hi! I'm your personal fitness coach 💪\n\n"
           "Ask me anything about workouts, nutrition or healthy living — or "
           "say \"make me a workout plan\" and I'll build one you can track.",
       isUser: false,
@@ -58,22 +43,16 @@ class _AiChatPageState extends State<AiChatPage> {
 
   bool _isSending = false;
 
-  /// Index of the plan message currently being adopted (shows a spinner on
-  /// just that card); null when nothing is being adopted.
   int? _adoptingIndex;
 
-  // ── Colour constants (aligned with AppColors) ──────────────────────────────
   static const Color _kPrimary = AppColors.primary;
   static const Color _kBackground = AppColors.background;
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
     final String? initial = widget.initialMessage?.trim();
     if (initial != null && initial.isNotEmpty) {
-      // Send after the first frame so the chat UI is built before we start.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _inputController.text = initial;
@@ -90,9 +69,6 @@ class _AiChatPageState extends State<AiChatPage> {
     super.dispose();
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  /// Scrolls the list to the very bottom after a frame has been rendered.
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -105,35 +81,26 @@ class _AiChatPageState extends State<AiChatPage> {
     });
   }
 
-  /// Appends [message] to the list and scrolls down.
   void _addMessage(ChatMessage message) {
     setState(() => _messages.add(message));
     _scrollToBottom();
   }
 
-  /// Removes the last message (used to replace the loading bubble).
   void _removeLastMessage() {
     if (_messages.isNotEmpty) {
       setState(() => _messages.removeLast());
     }
   }
 
-  // ── Send logic ─────────────────────────────────────────────────────────────
-
-  /// Sends the current input. Plan requests generate a trackable plan;
-  /// everything else is answered by the Q&A coach.
   Future<void> _send() async {
     final String text = _inputController.text.trim();
     if (text.isEmpty || _isSending) return;
 
-    // Clear input and lock UI immediately.
     _inputController.clear();
     setState(() => _isSending = true);
 
-    // 1. Show user bubble.
     _addMessage(ChatMessage(text: text, isUser: true));
 
-    // 2. Show loading / typing indicator.
     _addMessage(ChatMessage.loading());
 
     try {
@@ -145,13 +112,12 @@ class _AiChatPageState extends State<AiChatPage> {
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
-        // Re-focus the input for quick follow-up messages.
+
         _inputFocus.requestFocus();
       }
     }
   }
 
-  /// Normal fitness Q&A via Gemini.
   Future<void> _sendQuestion(String text) async {
     try {
       final String reply = await _chatService.sendMessage(text);
@@ -162,13 +128,10 @@ class _AiChatPageState extends State<AiChatPage> {
       _addMessage(ChatMessage.error(e.message));
     } catch (_) {
       _removeLastMessage();
-      _addMessage(
-        ChatMessage.error('Something went wrong. Please try again.'),
-      );
+      _addMessage(ChatMessage.error('Something went wrong. Please try again.'));
     }
   }
 
-  /// Generates a trackable workout plan and shows it as a plan card.
   Future<void> _generatePlanReply(String userPrompt) async {
     try {
       final GeneratedPlan result = await _planService.generateAndSavePlan(
@@ -176,11 +139,11 @@ class _AiChatPageState extends State<AiChatPage> {
       );
       _removeLastMessage();
 
-      // Longer-than-a-month requests are capped at 4 weeks.
       if (result.exceededMonth) {
         _addMessage(
           const ChatMessage(
-            text: "Plans longer than a month aren't recommended for "
+            text:
+                "Plans longer than a month aren't recommended for "
                 "beginners, so I've kept it to 4 weeks.",
             isUser: false,
           ),
@@ -189,11 +152,11 @@ class _AiChatPageState extends State<AiChatPage> {
 
       final String intro = result.totalWeeks > 1
           ? "Here's a ${result.totalWeeks}-week progressive plan built from "
-              "your tutorial exercises. Only Week 1 is unlocked — finish it to "
-              "unlock Week 2, and so on. Add Week 1 to your progress to start."
+                "your tutorial exercises. Only Week 1 is unlocked — finish it to "
+                "unlock Week 2, and so on. Add Week 1 to your progress to start."
           : "Here's a plan built only from your tutorial exercises and "
-              "matched to your profile. Add it to your progress to start "
-              "tracking each day.";
+                "matched to your profile. Add it to your progress to start "
+                "tracking each day.";
       _addMessage(ChatMessage(text: intro, isUser: false));
       _addMessage(ChatMessage.planResult(result.plan));
     } on WorkoutPlanServiceException catch (e) {
@@ -207,7 +170,6 @@ class _AiChatPageState extends State<AiChatPage> {
     }
   }
 
-  /// Heuristic: does [text] look like a request to build a workout plan?
   bool _isPlanRequest(String text) {
     final String t = text.toLowerCase();
     const List<String> verbs = <String>[
@@ -235,7 +197,6 @@ class _AiChatPageState extends State<AiChatPage> {
     return false;
   }
 
-  /// Adopts the plan in message [index] into progress tracking.
   Future<void> _adoptPlan(int index) async {
     if (_adoptingIndex != null) return;
     final ChatMessage message = _messages[index];
@@ -272,7 +233,6 @@ class _AiChatPageState extends State<AiChatPage> {
     }
   }
 
-  /// Clears conversation history and resets the Gemini chat session.
   void _clearChat() {
     _chatService.reset();
     setState(() {
@@ -287,16 +247,11 @@ class _AiChatPageState extends State<AiChatPage> {
     });
   }
 
-  /// Navigates to [ProgressPage] (kept from original for navigation parity).
   void _openProgress() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => const ProgressPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute<void>(builder: (_) => const ProgressPage()));
   }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +260,6 @@ class _AiChatPageState extends State<AiChatPage> {
       appBar: _buildAppBar(),
       body: Column(
         children: <Widget>[
-          // ── Message list ─────────────────────────────────────────────────
           Expanded(
             child: _MessageList(
               messages: _messages,
@@ -315,10 +269,8 @@ class _AiChatPageState extends State<AiChatPage> {
             ),
           ),
 
-          // ── Suggestion chips (shown only when no conversation yet) ───────
           if (_messages.length == 1) _SuggestionChips(onTap: _sendSuggestion),
 
-          // ── Input bar ────────────────────────────────────────────────────
           _InputBar(
             controller: _inputController,
             focusNode: _inputFocus,
@@ -338,10 +290,7 @@ class _AiChatPageState extends State<AiChatPage> {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: _kPrimary,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: _kPrimary, shape: BoxShape.circle),
             child: const Icon(
               Icons.fitness_center_rounded,
               color: Colors.white,
@@ -354,29 +303,22 @@ class _AiChatPageState extends State<AiChatPage> {
       ),
       centerTitle: true,
       actions: <Widget>[
-        // Clear conversation button.
         IconButton(
           icon: const Icon(Icons.refresh_rounded),
           tooltip: 'Clear chat',
           onPressed: _isSending ? null : _clearChat,
         ),
-        // Keep the original Progress shortcut.
-        TextButton(
-          onPressed: _openProgress,
-          child: const Text('Progress'),
-        ),
+
+        TextButton(onPressed: _openProgress, child: const Text('Progress')),
       ],
     );
   }
 
-  /// Sends a pre-written suggestion as if the user typed it.
   void _sendSuggestion(String suggestion) {
     _inputController.text = suggestion;
     _send();
   }
 }
-
-// ── Message list ────────────────────────────────────────────────────────────
 
 class _MessageList extends StatelessWidget {
   const _MessageList({
@@ -410,9 +352,6 @@ class _MessageList extends StatelessWidget {
   }
 }
 
-// ── Suggestion chips ─────────────────────────────────────────────────────────
-
-/// Quick-start prompts shown when the chat is empty.
 class _SuggestionChips extends StatelessWidget {
   const _SuggestionChips({required this.onTap});
 
@@ -438,10 +377,7 @@ class _SuggestionChips extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           final String suggestion = _suggestions[index];
           return ActionChip(
-            label: Text(
-              suggestion,
-              style: const TextStyle(fontSize: 12),
-            ),
+            label: Text(suggestion, style: const TextStyle(fontSize: 12)),
             onPressed: () => onTap(suggestion),
             backgroundColor: Colors.white,
             side: const BorderSide(color: AppColors.primary),
@@ -453,9 +389,6 @@ class _SuggestionChips extends StatelessWidget {
   }
 }
 
-// ── Input bar ────────────────────────────────────────────────────────────────
-
-/// The text field + send button anchored to the bottom of the screen.
 class _InputBar extends StatelessWidget {
   const _InputBar({
     required this.controller,
@@ -482,7 +415,6 @@ class _InputBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           child: Row(
             children: <Widget>[
-              // ── Text field ───────────────────────────────────────────────
               Expanded(
                 child: TextField(
                   controller: controller,
@@ -510,7 +442,6 @@ class _InputBar extends StatelessWidget {
 
               const SizedBox(width: 8),
 
-              // ── Send button ──────────────────────────────────────────────
               IconButton.filled(
                 onPressed: isSending ? null : onSend,
                 style: IconButton.styleFrom(
@@ -520,13 +451,13 @@ class _InputBar extends StatelessWidget {
                 ),
                 icon: isSending
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.send_rounded),
               ),
             ],

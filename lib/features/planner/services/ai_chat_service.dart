@@ -1,7 +1,6 @@
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-/// Wraps Firebase AI Logic (Gemini) for fitness-only conversational Q&A.
 class AiChatService {
   AiChatService() {
     _initSession();
@@ -42,10 +41,6 @@ Important rules:
     _chat = model.startChat();
   }
 
-  /// Sends [userMessage] to Gemini and returns the AI's text response.
-  ///
-  /// Throws [AiChatException] with the REAL error message so the UI bubble
-  /// always shows exactly what went wrong (helpful for debugging).
   Future<String> sendMessage(String userMessage) async {
     if (userMessage.trim().isEmpty) {
       throw const AiChatException('Message cannot be empty.');
@@ -64,27 +59,20 @@ Important rules:
       }
 
       return text.trim();
-
     } on AiChatException {
       rethrow;
-
     } on FirebaseException catch (e) {
-      // Surface the Firebase error code + message for easy diagnosis.
       throw AiChatException(
         '[Firebase ${e.code}] ${e.message ?? 'Unknown Firebase error'}',
       );
-
     } catch (e) {
-      // Surface the raw error — this is the key change that shows the real problem.
       throw AiChatException('${e.runtimeType}: ${e.toString()}');
     }
   }
 
-  /// Resets the chat session (clears conversation history).
   void reset() => _initSession();
 }
 
-/// Typed exception from [AiChatService].
 class AiChatException implements Exception {
   const AiChatException(this.message);
   final String message;

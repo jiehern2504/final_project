@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Three bouncing dots that indicate the AI is composing a response.
-///
-/// Each dot animates with a staggered delay so they appear to "wave"
-/// rather than all bouncing in sync.
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
 
@@ -36,17 +32,11 @@ class _TypingIndicatorState extends State<TypingIndicator>
       final Animation<double> animation = Tween<double>(
         begin: 0,
         end: -_bounceHeight,
-      ).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeInOut,
-        ),
-      );
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
 
       _controllers.add(controller);
       _animations.add(animation);
 
-      // Stagger each dot's loop start.
       Future<void>.delayed(_stagger * i, () {
         if (mounted) {
           controller.repeat(reverse: true);

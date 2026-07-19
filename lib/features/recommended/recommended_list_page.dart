@@ -7,7 +7,6 @@ import '../../core/theme/app_colors.dart';
 
 const Color _kText = AppColors.text;
 
-/// Full "See all" list of recommended workout videos.
 class RecommendedListPage extends StatelessWidget {
   const RecommendedListPage({super.key});
 
@@ -72,9 +71,9 @@ class _VideoCard extends StatelessWidget {
                     Text(
                       video.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: _kText,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: _kText,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(

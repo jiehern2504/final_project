@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../health_calculator.dart';
 
-/// The big result card at the top of the page. Shows either the BMI reading
-/// (value + category + colour band) or the TDEE reading (calories + breakdown).
 class ResultCard extends StatelessWidget {
   const ResultCard({
     super.key,
@@ -99,7 +97,6 @@ class ResultCard extends StatelessWidget {
   }
 }
 
-/// Visual style (fill + text colour) for each BMI band.
 class _BmiLevelStyle {
   const _BmiLevelStyle(this.fill, this.text);
   final Color fill;
@@ -153,9 +150,10 @@ class _BmiBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double? value = bmi;
-    // Marker position across a 0..40 BMI scale.
-    final double fraction =
-        value == null ? 0 : (value / 40).clamp(0.0, 1.0).toDouble();
+
+    final double fraction = value == null
+        ? 0
+        : (value / 40).clamp(0.0, 1.0).toDouble();
 
     return Column(
       children: [
@@ -256,9 +254,7 @@ class _TdeeBreakdown extends StatelessWidget {
         AppColors.secondary,
       ),
     ];
-    // A 2×2 layout using Rows so each cell sizes to its content height. This
-    // avoids the fixed aspect-ratio overflow a GridView can cause on some
-    // screen sizes.
+
     return Column(
       children: [
         _row(items[0], items[1]),

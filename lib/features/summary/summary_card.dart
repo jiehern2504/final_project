@@ -10,8 +10,6 @@ const Color _kPrimary = AppColors.primary;
 const Color _kText = AppColors.text;
 const Color _kMuted = AppColors.muted;
 
-/// The "Your progress" summary card shown at the bottom of the Home page.
-/// Shows the current month's weight + workouts; tapping opens the detail view.
 class SummaryCard extends StatefulWidget {
   const SummaryCard({super.key, this.repository});
 
@@ -38,7 +36,8 @@ class _SummaryCardState extends State<SummaryCard> {
       future: _future,
       builder: (BuildContext context, AsyncSnapshot<SummaryData> snap) {
         final SummaryData data =
-            snap.data ?? SummaryData(weights: <WeightLog>[], workouts: <WorkoutLog>[]);
+            snap.data ??
+            SummaryData(weights: <WeightLog>[], workouts: <WorkoutLog>[]);
         final bool loading =
             snap.connectionState == ConnectionState.waiting && !snap.hasData;
         final DateTime now = DateTime.now();
@@ -48,18 +47,18 @@ class _SummaryCardState extends State<SummaryCard> {
           onTap: (loading || data.isEmpty)
               ? null
               : () => Navigator.of(context).push<void>(
-                    MaterialPageRoute<void>(
-                      builder: (_) => SummaryDetailPage(data: data),
-                    ),
+                  MaterialPageRoute<void>(
+                    builder: (_) => SummaryDetailPage(data: data),
                   ),
+                ),
           child: loading
               ? const SizedBox(
                   height: 150,
                   child: Center(child: CircularProgressIndicator()),
                 )
               : data.isEmpty
-                  ? _empty()
-                  : _content(context, points, now),
+              ? _empty()
+              : _content(context, points, now),
         );
       },
     );
@@ -188,7 +187,6 @@ class _CardShell extends StatelessWidget {
   }
 }
 
-/// A labelled single-metric mini chart used on the Home card.
 class _MiniChart extends StatelessWidget {
   const _MiniChart({
     required this.label,
@@ -222,9 +220,14 @@ class _MiniChart extends StatelessWidget {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600, color: _kText)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _kText,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 2),
@@ -239,8 +242,10 @@ class _MiniChart extends StatelessWidget {
           SizedBox(
             height: 92,
             child: Center(
-              child: Text(emptyText,
-                  style: const TextStyle(fontSize: 12, color: _kMuted)),
+              child: Text(
+                emptyText,
+                style: const TextStyle(fontSize: 12, color: _kMuted),
+              ),
             ),
           ),
       ],

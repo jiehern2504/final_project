@@ -2,13 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Two large gender cards. [gender] is 'male' or 'female'.
 class GenderStep extends StatelessWidget {
-  const GenderStep({
-    super.key,
-    required this.gender,
-    required this.onChanged,
-  });
+  const GenderStep({super.key, required this.gender, required this.onChanged});
 
   final String gender;
   final ValueChanged<String> onChanged;

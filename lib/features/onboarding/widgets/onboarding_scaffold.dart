@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Shared chrome for a wizard step: a back button + "Step x of y" indicator,
-/// a centred title/subtitle, the step body, and a full-width primary button.
 class StepScaffold extends StatelessWidget {
   const StepScaffold({
     super.key,
@@ -82,7 +80,6 @@ class StepScaffold extends StatelessWidget {
   }
 }
 
-/// The app's standard full-width green action button.
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,

@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 import '../../core/constants/profile_constants.dart';
 import '../onboarding/widgets/bear_mascot.dart';
 
-/// Account creation: collects name + email + password. Physical stats are
-/// gathered afterwards by the onboarding wizard (which [AuthPage] shows once a
-/// new account exists with empty stats).
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
@@ -66,21 +63,19 @@ class _SignupPageState extends State<SignupPage> {
       }
 
       await user.updateDisplayName('$firstName $lastName');
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        <String, dynamic>{
-          'firstName': firstName,
-          'lastName': lastName,
-          'gender': kGenderOptions.first,
-          'activityLevel': kActivityOptions.first,
-          // Left null on purpose: the onboarding wizard fills these in, and
-          // AuthPage uses "height/weight are set" to know onboarding is done.
-          'height': null,
-          'weight': null,
-        },
-        SetOptions(merge: true),
-      );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(<String, dynamic>{
+            'firstName': firstName,
+            'lastName': lastName,
+            'gender': kGenderOptions.first,
+            'activityLevel': kActivityOptions.first,
 
-      // Pop back to AuthPage, which now shows the onboarding wizard.
+            'height': null,
+            'weight': null,
+          }, SetOptions(merge: true));
+
       if (mounted) Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       _showError(e.message ?? 'Could not create your account.');
@@ -117,10 +112,9 @@ class _SignupPageState extends State<SignupPage> {
                       const SizedBox(height: 6),
                       Text(
                         'Create your account to get started.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.black54),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                       ),
                       const SizedBox(height: 18),
                       Row(

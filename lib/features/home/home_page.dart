@@ -95,10 +95,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           .syncDeliveredNotifications()
           .catchError((_) {}),
     );
-    WorkoutReminderService.instance
-        .syncDeliveredNotifications()
-        .catchError((_) {});
-    // Bump the user's age if a year has passed since it was last set.
+    WorkoutReminderService.instance.syncDeliveredNotifications().catchError(
+      (_) {},
+    );
+
     AgeUpdater.maybeAdvance();
   }
 
@@ -112,9 +112,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      WorkoutReminderService.instance
-          .syncDeliveredNotifications()
-          .catchError((_) {});
+      WorkoutReminderService.instance.syncDeliveredNotifications().catchError(
+        (_) {},
+      );
     }
   }
 

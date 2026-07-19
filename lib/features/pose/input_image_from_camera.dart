@@ -4,7 +4,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
-/// Maps [DeviceOrientation] to rotation degrees (Android ML Kit pipeline).
 const Map<DeviceOrientation, int> kDeviceOrientationDegrees = {
   DeviceOrientation.portraitUp: 0,
   DeviceOrientation.landscapeLeft: 90,
@@ -16,11 +15,6 @@ Uint8List? _planeConcatBuffer;
 Uint8List? _nv21WorkBuffer;
 int _lastNv21Size = 0;
 
-/// Builds an [InputImage] for ML Kit from a camera frame.
-///
-/// Android: prefers [ImageFormatGroup.yuv420] (often [InputImageFormat.yuv_420_888]
-/// with three planes). Multi-plane frames are converted to NV21 per the
-/// [google_ml_kit_flutter](https://github.com/flutter-ml/google_ml_kit_flutter) example.
 InputImage? inputImageFromCameraImage({
   required CameraImage image,
   required CameraController controller,
@@ -32,12 +26,14 @@ InputImage? inputImageFromCameraImage({
   );
   if (rotationCompensation == null) return null;
 
-  final InputImageRotation? rotation =
-      InputImageRotationValue.fromRawValue(rotationCompensation);
+  final InputImageRotation? rotation = InputImageRotationValue.fromRawValue(
+    rotationCompensation,
+  );
   if (rotation == null) return null;
 
-  final InputImageFormat? format =
-      InputImageFormatValue.fromRawValue(image.format.raw);
+  final InputImageFormat? format = InputImageFormatValue.fromRawValue(
+    image.format.raw,
+  );
   if (format == null) return null;
 
   if (Platform.isAndroid) {
@@ -87,8 +83,10 @@ InputImage? inputImageFromCameraImage({
 }
 
 Uint8List _concatenatePlanes(CameraImage image) {
-  final int totalBytes =
-      image.planes.fold(0, (int sum, Plane plane) => sum + plane.bytes.length);
+  final int totalBytes = image.planes.fold(
+    0,
+    (int sum, Plane plane) => sum + plane.bytes.length,
+  );
 
   if (_planeConcatBuffer == null || _planeConcatBuffer!.length < totalBytes) {
     _planeConcatBuffer = Uint8List(totalBytes);
@@ -175,7 +173,6 @@ int? _rotationCompensation({
   return null;
 }
 
-/// Same rotation as used in [inputImageFromCameraImage] (for overlay alignment).
 InputImageRotation? mlKitRotationForCameraFrame({
   required CameraController controller,
   required CameraDescription camera,

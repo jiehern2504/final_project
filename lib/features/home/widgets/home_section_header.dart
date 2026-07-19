@@ -23,9 +23,9 @@ class _SectionHeader extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: textColor,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         if (actionLabel != null)

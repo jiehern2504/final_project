@@ -3,20 +3,14 @@ import 'package:flutter/material.dart';
 import 'pose_camera_page.dart';
 import 'pose_exercise_type.dart';
 
-/// Picker page — styled after the original two-card design.
-/// Each card shows the exercise name, key metrics tracked, and either a GIF
-/// or a fallback icon placeholder (replace the Icon widget with Image.asset
-/// once you have the GIF files).
 class PoseExercisePickerPage extends StatelessWidget {
   const PoseExercisePickerPage({super.key});
 
-  // ── Accent colours (one per exercise) — alternating green / orange to match
-  //    the app's green+amber brand, kept deep enough to read with white text.
-  static const Color _squatColor = Color(0xFF43A047); // green
-  static const Color _pushUpColor = Color(0xFFFB8C00); // orange
-  static const Color _gluteBridgeColor = Color(0xFF2E7D32); // deep green
-  static const Color _plankColor = Color(0xFFF57C00); // amber-orange
-  static const Color _crunchColor = Color(0xFF558B2F); // olive green
+  static const Color _squatColor = Color(0xFF43A047);
+  static const Color _pushUpColor = Color(0xFFFB8C00);
+  static const Color _gluteBridgeColor = Color(0xFF2E7D32);
+  static const Color _plankColor = Color(0xFFF57C00);
+  static const Color _crunchColor = Color(0xFF558B2F);
 
   @override
   Widget build(BuildContext context) {
@@ -72,18 +66,16 @@ class PoseExercisePickerPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Squat ──────────────────────────────────────────────────────
             _ExerciseCard(
               title: 'Squat',
               subtitle: 'Knee angle · torso alignment · reps',
               color: _squatColor,
-              // Replace with: Image.asset('assets/squat.gif', fit: BoxFit.cover)
+
               icon: Image.asset('assets/squat.gif', fit: BoxFit.cover),
               onTap: () => _open(context, PoseExerciseType.squat),
             ),
             const SizedBox(height: 14),
 
-            // ── Push-up ────────────────────────────────────────────────────
             _ExerciseCard(
               title: 'Push-up',
               subtitle: 'Elbow angle · body line · reps',
@@ -93,7 +85,6 @@ class PoseExercisePickerPage extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // ── Glute Bridge ───────────────────────────────────────────────
             _ExerciseCard(
               title: 'Glute Bridge',
               subtitle: 'Hip height · knee angle · reps',
@@ -106,7 +97,6 @@ class PoseExercisePickerPage extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // ── Plank ──────────────────────────────────────────────────────
             _ExerciseCard(
               title: 'Plank',
               subtitle: 'Body line · hold time (seconds)',
@@ -116,7 +106,6 @@ class PoseExercisePickerPage extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // ── Crunch ─────────────────────────────────────────────────────
             _ExerciseCard(
               title: 'Crunch',
               subtitle: 'Shoulder curl · hip angle · reps',
@@ -138,8 +127,6 @@ class PoseExercisePickerPage extends StatelessWidget {
     );
   }
 }
-
-// ── Exercise card (unchanged from original) ────────────────────────────────
 
 class _ExerciseCard extends StatelessWidget {
   const _ExerciseCard({
@@ -179,7 +166,6 @@ class _ExerciseCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: <Widget>[
-                  // Left — text
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +190,7 @@ class _ExerciseCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Right — GIF or placeholder
+
                   SizedBox(
                     width: 94,
                     height: 74,

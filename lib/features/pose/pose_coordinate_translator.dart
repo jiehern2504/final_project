@@ -4,8 +4,6 @@ import 'dart:ui' show Offset, Size;
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
-/// Maps ML Kit landmark coordinates (image space) to overlay canvas pixels.
-/// Ported from google_ml_kit_flutter `coordinates_translator.dart`.
 double translateX(
   double x,
   Size canvasSize,

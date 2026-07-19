@@ -21,8 +21,6 @@ class _MuscleTutorialPageState extends State<MuscleTutorialPage> {
   void _toggleSide(BodySide next) {
     if (_side == next) return;
     setState(() => _side = next);
-    // Keep selection if the same muscle exists on both sides; otherwise clear.
-    // (For this app, we allow same muscle id on both sides.)
   }
 
   @override
@@ -32,10 +30,7 @@ class _MuscleTutorialPageState extends State<MuscleTutorialPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-           appBar: AppBar(
-        title: const Text("Muscle Tutorial"),
-        centerTitle: true,
-           ),
+      appBar: AppBar(title: const Text("Muscle Tutorial"), centerTitle: true),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
@@ -46,10 +41,8 @@ class _MuscleTutorialPageState extends State<MuscleTutorialPage> {
                   Expanded(
                     child: Text(
                       'Select Muscle Group',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                   ),
                   _SideToggle(
@@ -85,17 +78,15 @@ class _MuscleTutorialPageState extends State<MuscleTutorialPage> {
                         side: _side,
                         primaryColor: primary,
                         selected: _selected,
-                        onSelected: (MuscleId? m) => setState(() => _selected = m),
+                        onSelected: (MuscleId? m) =>
+                            setState(() => _selected = m),
                       ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              _SelectedMuscleCard(
-                muscle: _selected,
-                primaryColor: primary,
-              ),
+              _SelectedMuscleCard(muscle: _selected, primaryColor: primary),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
@@ -108,9 +99,9 @@ class _MuscleTutorialPageState extends State<MuscleTutorialPage> {
                             MaterialPageRoute<void>(
                               builder: (BuildContext context) =>
                                   MuscleExercisesPage(
-                                muscle: muscle,
-                                primaryColor: primary,
-                              ),
+                                    muscle: muscle,
+                                    primaryColor: primary,
+                                  ),
                             ),
                           );
                         }
@@ -229,10 +220,7 @@ class _ToggleChip extends StatelessWidget {
 }
 
 class _SelectedMuscleCard extends StatelessWidget {
-  const _SelectedMuscleCard({
-    required this.muscle,
-    required this.primaryColor,
-  });
+  const _SelectedMuscleCard({required this.muscle, required this.primaryColor});
 
   final MuscleId? muscle;
   final Color primaryColor;
@@ -279,16 +267,16 @@ class _SelectedMuscleCard extends StatelessWidget {
                 Text(
                   'Selected muscle',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   label,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
@@ -298,4 +286,3 @@ class _SelectedMuscleCard extends StatelessWidget {
     );
   }
 }
-
